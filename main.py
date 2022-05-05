@@ -21,10 +21,10 @@ def main():
                          """.format(TABLE_NAME)
         )
         if mycursor.fetchone()[0] != 1:
-            TABLE_ATTRIBUTES = "id_str VARCHAR(255), created_at DATETIME, text VARCHAR(1025), \
+            TABLE_ATTRIBUTES = "id INT NOT NULL AUTO_INCREMENT, id_str VARCHAR(255), created_at DATETIME, text VARCHAR(1025), \
             polarity INT, user_created_at VARCHAR(255), user_location VARCHAR(255), \
             user_name VARCHAR(255), longitude DOUBLE, latitude DOUBLE, \
-            retweet_count INT, favorite_count INT"
+            retweet_count INT, favorite_count INT, PRIMARY KEY (id)"
             mycursor.execute("""CREATE TABLE {} ({})
                              """.format(TABLE_NAME, TABLE_ATTRIBUTES))
             mydb.commit()

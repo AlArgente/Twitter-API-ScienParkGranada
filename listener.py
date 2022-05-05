@@ -35,31 +35,13 @@ class StreamListener(tweepy.Stream):
         # if status['retweeted'] or text.startswith("RT "):
         if 'retweeted_status' in status.keys():
             # Avoid retweets
-            print(f"RT avoided. Tweet: {text}")
-            print(f"Tweet id: {status['id']}")
-            print(f"User: {status['user']['screen_name']}")
-            print(f"Tweet status retweeted: {status['retweeted_status']}")
-            print(f"Tweet retweeted: {status['retweeted']}")
-            print(f"Tamaño del tweet: {len(text)}")
-            print(f"Tweet keys: {status.keys()}")
-            print(f"Tweet truncated: {status['truncated']}")
             return True
         # Extract atributed from each tweet
-        print('Normal tweet.')
-        print(f"Tweet keys: {status.keys()}")
         # print(f"Display text range: {status['display_text_range']}")
-        print(f"Len of tweet: {len(text)}")
-        print(f"Tweet truncated: {status['truncated']}")
         if status['truncated']:
-            print(f"Extended tweet not cleaned: {status['extended_tweet']}")
-            extended_tweet = clean_tweet(decode_text(status['extended_tweet']['full_text']))
-            print(f"Extended tweet: {extended_tweet}")
-            print(f"Len of extended tweet: {len(extended_tweet)}")
-        try:
-            print(f"Tweet status retweeted: {status['retweeted_status']}")
-        except KeyError as er:
-            print("En los no retweets no hay retweeted_status.")
+            text = clean_tweet(decode_text(status['extended_tweet']['full_text']))
         print(f"User keys: {status['user'].keys()}")
+        print(f"User name: {status['user']['name']}")
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
         # TODO: Add pipeline to extract sentiment with BERT Model, meanwhile I'm using textblob
