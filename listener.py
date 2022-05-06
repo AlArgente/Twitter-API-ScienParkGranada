@@ -18,10 +18,6 @@ class StreamListener(tweepy.Stream):
     def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, **kwargs):
         super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, **kwargs)
 
-    def on_data_new(self, raw_data):
-        print(raw_data)
-        raise ValueError('mimi')
-
     def on_connect(self):
         return super().on_connect()
 
@@ -40,8 +36,7 @@ class StreamListener(tweepy.Stream):
         # print(f"Display text range: {status['display_text_range']}")
         if status['truncated']:
             text = clean_tweet(decode_text(status['extended_tweet']['full_text']))
-        print(f"User keys: {status['user'].keys()}")
-        print(f"User name: {status['user']['name']}")
+        # print(f"User keys: {status['user'].keys()}")
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
         # TODO: Add pipeline to extract sentiment with BERT Model, meanwhile I'm using textblob
@@ -49,8 +44,7 @@ class StreamListener(tweepy.Stream):
         polarity = sentiment.polarity
         user_location = decode_text(status['user']['location']) if status['user']['location'] is not None else 'Not specified'
         user_created_at = format_time(status['user']['created_at'])
-        user_name = status['user']['name']
-
+        user_name = str(status['user']['screen_name'])
         longitude = 0.0
         latitude = 0.0
         if status['coordinates']:
