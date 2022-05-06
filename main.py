@@ -3,6 +3,7 @@ import credentials
 
 from listener import StreamListener
 from utils import db_connection, insert_data_on_table
+from utils_db import check_table_exists_or_create_it
 
 def main():    
     # Connect to db
@@ -12,24 +13,8 @@ def main():
         print('DB Connected')
         # Create table if doesnt exists
         TABLE_NAME = 'Twitter'
-        TRACK_WORDS = ['ibai', 'vayne']
-        mycursor = mydb.cursor()
-        mycursor.execute("""
-                         SELECT COUNT(*)
-                         FROM information_schema.tables
-                         WHERE table_name = '{0}'
-                         """.format(TABLE_NAME)
-        )
-        if mycursor.fetchone()[0] != 1:
-            TABLE_ATTRIBUTES = "id INT NOT NULL AUTO_INCREMENT, id_str VARCHAR(255), created_at DATETIME, text VARCHAR(1025), \
-            polarity INT, user_created_at VARCHAR(255), user_location VARCHAR(255), \
-            user_name VARCHAR(255), longitude DOUBLE, latitude DOUBLE, \
-            retweet_count INT, favorite_count INT, PRIMARY KEY (id)"
-            mycursor.execute("""CREATE TABLE {} ({})
-                             """.format(TABLE_NAME, TABLE_ATTRIBUTES))
-            mydb.commit()
-            print("Database created.")
-        mycursor.close()
+        TRACK_WORDS = ['#SVGala3', '#Chanelazo']
+        check_table_exists_or_create_it(mydb, table_name=TABLE_NAME)
         mydb.close()
         # Load credentials
         auth = tweepy.OAuthHandler(credentials.API_KEY,
@@ -45,8 +30,6 @@ def main():
                                      # listener=my_listener)
         # result = my_listener.filter(languages=['es', 'en'], track=TRACK_WORDS)
         my_listener.filter(languages=['es', 'en'], track=TRACK_WORDS)
-        # if result != -1:
-        #     insert_data_on_table(mydb=mydb, data=result, table_name=TABLE_NAME)
 
 if __name__ == '__main__':
     main()

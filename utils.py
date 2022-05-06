@@ -31,14 +31,14 @@ def insert_data_on_table(mydb, data, table_name):
     print('Inserting data on db.')
     cursor = mydb.cursor()
     sql = f"INSERT INTO {table_name} (id_str, created_at, text, polarity,\
-        user_created_at, user_location, user_name, \
+        user_created_at, user_location, user_name, user_id, \
             longitude, latitude, retweet_count, favorite_count) VALUES \
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
     val = (data['id_str'], data['created_at'], data['text'],\
                 data['polarity'], data['user_created_at'], data['user_location'],\
-                data['user_name'], data['longitude'], data['latitude'], data['retweet_count'],\
-                data['favorite_count'])
+                data['user_name'], data['user_id'], data['longitude'], \
+                data['latitude'], data['retweet_count'], data['favorite_count'])
     cursor.execute(sql, val)
     mydb.commit()
     print('Data inserted on db.')
