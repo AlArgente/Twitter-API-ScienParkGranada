@@ -134,4 +134,4 @@ dmypy.json
 .pyre/
 
 # Credential files
-credetials.py
+./credetials.py
