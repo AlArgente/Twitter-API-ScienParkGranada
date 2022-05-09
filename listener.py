@@ -5,7 +5,8 @@ import tweepy
 from textblob import TextBlob
 
 import credentials
-from utils import clean_tweet, decode_text, db_connection, insert_data_on_table, format_time
+from utils import clean_tweet, decode_text, format_time
+from utils_db import db_connection, insert_data_on_table
 
 # tweepy.asynchronous.AsyncStream
 

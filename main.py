@@ -2,8 +2,7 @@ import tweepy
 import credentials
 
 from listener import StreamListener
-from utils import db_connection, insert_data_on_table
-from utils_db import check_table_exists_or_create_it
+from utils_db import check_table_exists_or_create_it, db_connection, insert_data_on_table
 
 def main():    
     # Connect to db
