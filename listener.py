@@ -1,11 +1,10 @@
 import json
-from os import stat
-from turtle import st
+import pandas as pd
 import tweepy
 from textblob import TextBlob
 
 import mysql.connector
-from utils import clean_tweet, decode_text, format_time
+from utils import clean_tweet, decode_text, format_time, remove_emoji_from_text
 from utils_db import db_connection, insert_data_on_table
 
 # tweepy.asynchronous.AsyncStream
@@ -18,6 +17,7 @@ class StreamListener(tweepy.Stream):
 
     def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, **kwargs):
         super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, **kwargs)
+        self.__df_emojis = pd.read_csv('descriptions_of_emojis.csv', sep=';')
 
     def on_connect(self):
         return super().on_connect()
@@ -68,7 +68,14 @@ class StreamListener(tweepy.Stream):
         try:
             self.__add_data_to_db(data=data_to_store)
         except mysql.connector.errors.DatabaseError as er:
-            print(f"Error storing the text: {text}")
+            print('Entering in the except')
+            data_to_store['text'] = remove_emoji_from_text(self.__df_emojis, data_to_store['text'])
+            data_to_store['polarity'] = TextBlob(data_to_store['text']).sentiment.polarity
+            self.__add_data_to_db(data=data_to_store)
+            print('Error storing but succesfully removed the emojis.')
+        finally:
+            print(f"Error stoing the text: {text}")
+            print("Don't have the emoji stored on the csv")
 
     def on_request_error(self, status_code):
         """Function to take care of Twitter API rate limits.
