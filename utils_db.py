@@ -1,5 +1,6 @@
 """Functions to create the database, to create the tables and other possible functions on the database.
 """
+import pandas as pd
 import mysql.connector
 from db_tables import TablesEnum
 
@@ -54,3 +55,13 @@ def check_table_exists_or_create_it(mydb, table_name='Twitter'):
         mydb.commit()
         print("Table created.")
     mycursor.close()
+
+def query_db(table_name='Twitter', table_attributes=None):
+    if not table_attributes:
+        raise ValueError("Give table attributes to extract.")
+    dbcon = db_connection()
+    if not dbcon:
+        raise ConnectionError("Error connecting to the database.")
+    attribute_query = ', '.join(list(table_attributes))
+    query = f"SELECT {attribute_query} FROM {table_name}"
+    return pd.read_sql(query, con=dbcon)

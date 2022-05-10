@@ -4,7 +4,7 @@ from turtle import st
 import tweepy
 from textblob import TextBlob
 
-import credentials
+import mysql.connector
 from utils import clean_tweet, decode_text, format_time
 from utils_db import db_connection, insert_data_on_table
 
@@ -65,7 +65,10 @@ class StreamListener(tweepy.Stream):
         }
         
         # Store data into msql
-        self.__add_data_to_db(data=data_to_store)
+        try:
+            self.__add_data_to_db(data=data_to_store)
+        except mysql.connector.errors.DatabaseError as er:
+            print(f"Error storing the text: {text}")
 
     def on_request_error(self, status_code):
         """Function to take care of Twitter API rate limits.
