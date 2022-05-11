@@ -33,16 +33,16 @@ class StreamListener(tweepy.Stream):
             return True
         # TODO: Errors when saving emojis on database, check how to save them correctly.
         if status['truncated']:
-            text = clean_tweet(decode_text(status['extended_tweet']['full_text']))
+            text = str(clean_tweet(decode_text(status['extended_tweet']['full_text'])))
         else:
-            text = clean_tweet(decode_text(status['text']))
+            text = str(clean_tweet(decode_text(status['text'])))
         # print(f"User keys: {status['user'].keys()}")
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
         # TODO: Add pipeline to extract sentiment with BERT Model, meanwhile I'm using textblob
         sentiment = TextBlob(text).sentiment
         polarity = sentiment.polarity
-        user_location = decode_text(status['user']['location']) if status['user']['location'] is not None else 'Not specified'
+        user_location = remove_emoji_from_text(decode_text(status['user']['location'])) if status['user']['location'] is not None else 'Not specified'
         user_created_at = format_time(status['user']['created_at'])
         user_name = status['user']['screen_name']
         user_id = status['user']['id_str']
@@ -69,11 +69,11 @@ class StreamListener(tweepy.Stream):
             self.__add_data_to_db(data=data_to_store)
         except mysql.connector.errors.DatabaseError as er:
             print('Entering in the except')
-            data_to_store['text'] = remove_emoji_from_text(self.__df_emojis, data_to_store['text'])
+            data_to_store['text'] = remove_emoji_from_text(data_to_store['text'])
             data_to_store['polarity'] = TextBlob(data_to_store['text']).sentiment.polarity
             self.__add_data_to_db(data=data_to_store)
             print('Error storing but succesfully removed the emojis.')
-        finally:
+        except:
             print(f"Error stoing the text: {text}")
             print("Don't have the emoji stored on the csv")
 

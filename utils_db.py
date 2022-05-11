@@ -4,7 +4,7 @@ import pandas as pd
 import mysql.connector
 from db_tables import TablesEnum
 
-def db_connection(host='localhost', user='alberto', passwd='passwd', database='TwitterDB', charset='utf8'):
+def db_connection(host='localhost', user='alberto', passwd='passwd', database='TwitterDB', charset='utf8mb4'):
     return mysql.connector.connect(
         host=host,
         user=user,

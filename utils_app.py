@@ -5,7 +5,7 @@ def generate_table(df, max_rows=10):
     return dash_table.DataTable(
         columns=[{"name": i, "id": i} for i in df.columns],
         data=df.to_dict('records'),
-        style_table={'height': '400px', 'overflowY': 'auto'},
+        style_table={'height': '400px', 'overflowY': 'scroll'},
         # fixed_rows={'headers': True},
         style_cell={'minWidth': 15, 'width': 35, 'maxWidth': 1005, 'text-align': 'center'},
         style_cell_conditional=[

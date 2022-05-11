@@ -34,6 +34,10 @@ def format_time(time):
     hour = time[3]
     return f"{year}-{month}-{day} {hour}"
 
+def format_time_sql(time):
+    time = str(time).split('T')
+    return ' '.join(time)
+
 def month_str_to_int(month):
     MONTHS = {'jan':'01', 'feb':'02', 'mar':'03', 'apr':'04', 'may':'05', 'jun':'06',
               'jul':'07', 'aug':'08', 'sep':'09', 'oct':'10', 'nov':'11', 'dec':'12'}
@@ -55,10 +59,25 @@ def replace_emoji_from_text(df, text):
     print(f"Text after removing emojis: {new_text}")
     return new_text
 
-def remove_emoji_from_text(df, text):
-    print(f"Text before removing emojis: {text}")
-    allchars = list(text.decode('utf-8'))
-    emoji_list = [c for c in allchars if c in emoji.UNICODE_EMOJI]
-    new_text =  ' '.join([str for str in text.decode('utf-8').split() if all(i not in str for i in emoji_list)])
-    print(f"Text after removing emojis: {new_text}")
-    return new_text
+def remove_emoji_from_text(text):
+    emoj = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        u"\U00002500-\U00002BEF"  # chinese char
+        u"\U00002702-\U000027B0"
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        u"\U0001f926-\U0001f937"
+        u"\U00010000-\U0010ffff"
+        u"\u2640-\u2642" 
+        u"\u2600-\u2B55"
+        u"\u200d"
+        u"\u23cf"
+        u"\u23e9"
+        u"\u231a"
+        u"\ufe0f"  # dingbats
+        u"\u3030"
+        "]+", re.UNICODE)
+    return re.sub(emoj, '', text)
