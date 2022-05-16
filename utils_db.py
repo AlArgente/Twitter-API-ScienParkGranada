@@ -63,5 +63,22 @@ def query_db(table_name='Twitter', table_attributes=None):
     if not dbcon:
         raise ConnectionError("Error connecting to the database.")
     attribute_query = ', '.join(list(table_attributes))
-    query = f"SELECT {attribute_query} FROM {table_name}"
+    query = f"SELECT {attribute_query} FROM {table_name} ORDER BY {table_attributes[-1]} DESC"
     return pd.read_sql(query, con=dbcon)
+
+def query_db_last_minutes(table_name="Twitter", table_attributes=None, minutes=120):
+    if not table_attributes:
+        raise ValueError("Give table attributes to extract.")
+    dbcon = db_connection()
+    if not dbcon:
+        raise ConnectionError("Error connecting to the database.")
+    attribute_query = ', '.join(list(table_attributes))
+    query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC"
+    return pd.read_sql(query, con=dbcon)
+
+def query_total_tweets(table_name="Twitter"):
+    dbcon = db_connection()
+    if not dbcon:
+        raise ConnectionError("Error connecting to the database.")
+    query = f"SELECT COUNT(*) from {table_name}"
+    return pd.read_sql(query, con=dbcon).iloc[0].values[0]

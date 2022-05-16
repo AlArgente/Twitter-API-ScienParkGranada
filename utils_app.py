@@ -35,3 +35,15 @@ def generate_table(df, max_rows=10):
         page_size=10,
         page_action='none'
     )
+
+def generate_timeline_user(username="DaSCI_es"):
+    return html.Iframe(
+                srcDoc=f'''
+                    <a class="twitter-timeline" data-theme="light" href="https://twitter.com/{username}?ref_src=twsrc%5Etfw">
+                        Tweets with HashTag #Hola
+                    </a>
+                    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                ''',
+                height=400,
+                width=400
+            )

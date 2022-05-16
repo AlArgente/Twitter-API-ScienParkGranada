@@ -4,7 +4,8 @@ import emoji
 import pandas as pd
 import mysql.connector
 import unicodedata
-
+import time
+from datetime import datetime
 
 def clean_tweet(tweet): 
     ''' 
@@ -19,7 +20,7 @@ def decode_text(text):
     return ''.join(c for c in unicodedata.normalize('NFD', text)
                     if unicodedata.category(c) != 'Mn')
     
-def format_time(time):
+def format_time(dtime):
     """Function to formate time format from Twitter API to SQL time.
     
     SQL Time: '%Y-%m-%d %H:%M:%S'
@@ -27,12 +28,15 @@ def format_time(time):
     Args:
         time (string): string containing the time when tweet was published.
     """
-    time = time.split(' ')
-    day = time[2]
-    month = month_str_to_int(time[1])
-    year = time[5]
-    hour = time[3]
-    return f"{year}-{month}-{day} {hour}"
+    new_datetime = datetime.strftime(datetime.strptime(dtime,'%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
+    aux_datetime = datetime.strptime(new_datetime,  '%Y-%m-%d %H:%M:%S')
+    # time = time.split(' ')
+    # day = time[2]
+    # month = month_str_to_int(time[1])
+    # year = time[5]
+    # hour = time[3]
+    # return f"{year}-{month}-{day} {hour}"
+    return aux_datetime
 
 def format_time_sql(time):
     time = str(time).split('T')

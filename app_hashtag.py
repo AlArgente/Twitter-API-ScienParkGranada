@@ -5,8 +5,8 @@ import dash_daq as daq
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import pandas as pd
-from utils_app import generate_table
-from utils_db import query_db
+from utils_app import generate_table, generate_timeline_user
+from utils_db import query_db, query_db_last_minutes, query_total_tweets
 from utils import format_time_sql
 
 external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -18,7 +18,7 @@ app.title = 'Real-Time Twitter Monitor'
 # server = app.server
 # app.run_server() # To run the server
 
-df = query_db(table_attributes=['text', 'user_name', 'created_at', 'polarity'])
+df = query_db(table_attributes=['text', 'user_name', 'polarity', 'created_at'])
 df['created_at'] = df['created_at'].apply(lambda x: format_time_sql(x))
 
 app.layout = html.Div(children=[
@@ -30,7 +30,7 @@ app.layout = html.Div(children=[
     # Here add more Divs to the layout
     html.Br(),
     html.Div(id='live-update-graph'),
-    html.Div(id='live-update-bottom-graph')
+    html.Div(id='live-update-bottom-graph'),
 ], className="dash-bootstrap")
 
 @app.callback(Output('live-update-graph', 'children'),
@@ -40,14 +40,17 @@ def update_graph_live(n):
     data_from = "Twitter. Hashtag: #Eurovision, #FelizMiércoles"
 
     # Positives, negatives and neutral comments.
-    df = query_db(table_attributes=['text', 'user_name', 'created_at', 'polarity'])
+    df = query_db_last_minutes(table_attributes=['text', 'user_name', 'created_at', 'polarity'], minutes=5)
     df['created_at'] = df['created_at'].apply(lambda x: format_time_sql(x))
+    total_tweets = query_total_tweets()
     num_pos = df[df['polarity']==1]['polarity'].count()
     num_neg = df[df['polarity']==-1]['polarity'].count()
     num_neu = df[df['polarity']==0]['polarity'].count()
     # Create the graph once data is loaded
     children = [
         html.Div([
+            generate_timeline_user("DaSCI_es"),
+            generate_timeline_user("ParqueCiencias"),
             html.Div([
                 dcc.Graph(
                     id='pie-chart',
@@ -77,7 +80,36 @@ def update_graph_live(n):
                         }
                     }
                 )
-            ], style={'width': '27%', 'display': 'inline-block'})
+            ], style={'width': '27%', 'display': 'inline-block'}),
+            html.Div(
+                children=[
+                    html.P(
+                        'Total tweets available',
+                        style={
+                            "fontsize": 20,
+                        }
+                    ),
+                    html.P(
+                        f"{total_tweets}",
+                        style={
+                            "fontsize": 40,
+                            'fontWeight': 'bold',
+                        }
+                    )
+                ]
+            ),
+            html.Div(
+                # className='three columns',
+                children=[
+                    html.P(
+                    'Data extracted from:'
+                    ),
+                    html.A(
+                        'Twitter API',
+                        href='https://developer.twitter.com'
+                    )                    
+                ]
+            )
         ])
     ]
     return children
