@@ -56,7 +56,7 @@ def check_table_exists_or_create_it(mydb, table_name='Twitter'):
         print("Table created.")
     mycursor.close()
 
-def query_db(table_name='Twitter', table_attributes=None):
+def query_db(table_name='Twitter', table_attributes=None, **kwargs):
     if not table_attributes:
         raise ValueError("Give table attributes to extract.")
     dbcon = db_connection()
@@ -66,7 +66,8 @@ def query_db(table_name='Twitter', table_attributes=None):
     query = f"SELECT {attribute_query} FROM {table_name} ORDER BY {table_attributes[-1]} DESC"
     return pd.read_sql(query, con=dbcon)
 
-def query_db_last_minutes(table_name="Twitter", table_attributes=None, minutes=120):
+def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs):
+    minutes = kwargs['minutes']
     if not table_attributes:
         raise ValueError("Give table attributes to extract.")
     dbcon = db_connection()

@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import tweepy
 from textblob import TextBlob
+from transformers import pipeline
 
 import mysql.connector
 from utils import clean_tweet, decode_text, format_time, remove_emoji_from_text
@@ -18,6 +19,8 @@ class StreamListener(tweepy.Stream):
     def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, **kwargs):
         super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, **kwargs)
         self.__df_emojis = pd.read_csv('descriptions_of_emojis.csv', sep=';')
+        self.__model_path = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
+        self.__sentiment_task = pipeline("sentiment-analysis", model=self.__model_path, tokenizer=self.__model_path)
 
     def on_connect(self):
         return super().on_connect()
@@ -40,8 +43,10 @@ class StreamListener(tweepy.Stream):
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
         # TODO: Add pipeline to extract sentiment with BERT Model, meanwhile I'm using textblob
-        sentiment = TextBlob(text).sentiment
-        polarity = sentiment.polarity
+        # sentiment = TextBlob(text).sentiment
+        sentiment = self.__sentiment_task(text)[0]['label']
+        # polarity = sentiment.polarity
+        polarity = self.__polarity_str_to_int(sentiment)
         user_location = remove_emoji_from_text(decode_text(status['user']['location'])) if status['user']['location'] is not None else 'Not specified'
         user_created_at = format_time(status['user']['created_at'])
         user_name = status['user']['screen_name']
@@ -89,3 +94,11 @@ class StreamListener(tweepy.Stream):
         if mydb.is_connected():
             insert_data_on_table(mydb=mydb, data=data, table_name=table_name)
             mydb.close()
+
+    def __polarity_str_to_int(self, polarity):
+        if polarity == 'Positive':
+            return 1
+        elif polarity == 'Negative':
+            return -1
+        else:
+            return 0
