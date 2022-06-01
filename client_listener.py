@@ -14,4 +14,4 @@ class ClientListener(Client):
 
     def get_user_id_by_username(self, username=None):
         user_info = self.get_user(username=username)
-        return user_info['data']['id']
+        return user_info.data.id

@@ -2,7 +2,6 @@ import json
 import pandas as pd
 import tweepy
 from textblob import TextBlob
-from transformers import pipeline
 
 import mysql.connector
 from utils import clean_tweet, decode_text, format_time, remove_emoji_from_text
@@ -16,11 +15,10 @@ class StreamListener(tweepy.Stream):
     """Class to get tweets
     """
 
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, **kwargs):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, classifier, **kwargs):
         super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, **kwargs)
         self.__df_emojis = pd.read_csv('descriptions_of_emojis.csv', sep=';')
-        self.__model_path = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
-        self.__sentiment_task = pipeline("sentiment-analysis", model=self.__model_path, tokenizer=self.__model_path)
+        self.__sentiment_task = classifier
 
     def on_connect(self):
         return super().on_connect()
@@ -34,7 +32,6 @@ class StreamListener(tweepy.Stream):
         if 'retweeted_status' in status.keys():
             # Avoid retweets
             return True
-        # TODO: Errors when saving emojis on database, check how to save them correctly.
         if status['truncated']:
             text = str(clean_tweet(decode_text(status['extended_tweet']['full_text'])))
         else:
@@ -42,10 +39,7 @@ class StreamListener(tweepy.Stream):
         # print(f"User keys: {status['user'].keys()}")
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
-        # TODO: Add pipeline to extract sentiment with BERT Model, meanwhile I'm using textblob
-        # sentiment = TextBlob(text).sentiment
-        sentiment = self.__sentiment_task(text)[0]['label']
-        # polarity = sentiment.polarity
+        sentiment = self.__sentiment_task.get_sentiment(text)
         polarity = self.__polarity_str_to_int(sentiment)
         user_location = remove_emoji_from_text(decode_text(status['user']['location'])) if status['user']['location'] is not None else 'Not specified'
         user_created_at = format_time(status['user']['created_at'])
@@ -57,30 +51,17 @@ class StreamListener(tweepy.Stream):
             longitude = status['coordinates']['coordinates'][0]
             latitude = status['coordinates']['coordinates'][1]
 
-        # print(text)
-        # print(f"Long: {longitude}, Lati: {latitude}")
-
         retweet_count = status['retweet_count']
         favorite_count = status['favorite_count']
-        
+
         data_to_store = {
             'id_str':id_str, 'created_at': created_at, 'text':text, 'sentiment':sentiment, 'user_id':user_id,
             'polarity': polarity, 'user_location':user_location, 'user_created_at':user_created_at, 'user_name':user_name,
             'longitude':longitude, 'latitude': latitude, 'retweet_count':retweet_count, 'favorite_count':favorite_count
         }
-        
+
         # Store data into msql
-        try:
-            self.__add_data_to_db(data=data_to_store)
-        except mysql.connector.errors.DatabaseError as er:
-            print('Entering in the except')
-            data_to_store['text'] = remove_emoji_from_text(data_to_store['text'])
-            data_to_store['polarity'] = TextBlob(data_to_store['text']).sentiment.polarity
-            self.__add_data_to_db(data=data_to_store)
-            print('Error storing but succesfully removed the emojis.')
-        except:
-            print(f"Error stoing the text: {text}")
-            print("Don't have the emoji stored on the csv")
+        self.__add_data_to_db(data=data_to_store)
 
     def on_request_error(self, status_code):
         """Function to take care of Twitter API rate limits.
