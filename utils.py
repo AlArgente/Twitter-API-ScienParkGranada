@@ -42,20 +42,21 @@ def format_time(dtime):
         time (string): string containing the time when tweet was published.
     """
     new_datetime = datetime.strftime(datetime.strptime(dtime,'%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
-    aux_datetime = datetime.strptime(new_datetime,  '%Y-%m-%d %H:%M:%S')
-    # time = time.split(' ')
-    # day = time[2]
-    # month = month_str_to_int(time[1])
-    # year = time[5]
-    # hour = time[3]
-    # return f"{year}-{month}-{day} {hour}"
-    return aux_datetime
+    return datetime.strptime(new_datetime,  '%Y-%m-%d %H:%M:%S')
 
 def format_time_sql(time):
     time = str(time).split('T')
     return ' '.join(time)
 
 def month_str_to_int(month):
+    """Function to convert the month as letters to numbers.
+
+    Args:
+        month (str): Month as letters
+
+    Returns:
+        str: Month as numbers.
+    """
     MONTHS = {'jan':'01', 'feb':'02', 'mar':'03', 'apr':'04', 'may':'05', 'jun':'06',
               'jul':'07', 'aug':'08', 'sep':'09', 'oct':'10', 'nov':'11', 'dec':'12'}
     return MONTHS[month.lower()]
@@ -77,6 +78,14 @@ def replace_emoji_from_text(df, text):
     return new_text
 
 def remove_emoji_from_text(text):
+    """Function to remove emojis from the text.
+
+    Args:
+        text (str): Tweet to be cleaned.
+
+    Returns:
+        str: Tweets without emojis.
+    """
     emoj = re.compile("["
         u"\U0001F600-\U0001F64F"  # emoticons
         u"\U0001F300-\U0001F5FF"  # symbols & pictographs
@@ -100,8 +109,20 @@ def remove_emoji_from_text(text):
     return re.sub(emoj, '', text)
 
 def get_tweets_by_hashtag(api, clf, hashtag="#FelizMartes", max_tweets=100, max_limit=1000):
+    """Function to get the tweets from a hashtag
+
+    Args:
+        api (Tweepy.API): Connection to the Twitter API
+        clf (Classifier): The classifier selected to make the predictions.
+        hashtag (str, optional): Hashtag to search Tweets from. Defaults to "#FelizMartes".
+        max_tweets (int, optional): Max number of tweets to search in each call. Defaults to 100.
+        max_limit (int, optional): Max number of tweets to search. Defaults to 1000.
+
+    Returns:
+        Pandas.DataFrame: DataFrame that contains the tweets, the user that created the tweet, the date and the polarity.
+    """
     # First method: Only get 100 tweets max
-    tweets = list(api.search_tweets(q=hashtag, count=max_tweets, tweet_mode = "extended", exclude='retweets'))
+    # tweets = list(api.search_tweets(q=hashtag, count=max_tweets, tweet_mode = "extended", exclude='retweets'))
     # Second method to get max_limit tweets from hashtag
     tweets_cursor = list(tweepy.Cursor(api.search_tweets, q=hashtag, count=100, tweet_mode="extended", exclude="retweets").items(max_limit))
     filtered_tweets = []
@@ -114,31 +135,8 @@ def get_tweets_by_hashtag(api, clf, hashtag="#FelizMartes", max_tweets=100, max_
         polarity_tweets.append(clf.get_sentiment(clean_text))
         usernames_tweets.append(tweet.user.screen_name)
         created_at = tweet.created_at
-        # created_at = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
         created_at = created_at.astimezone(pytz.timezone('Europe/Madrid')).strftime('%Y-%m-%d %H:%M:%S')
         created_at_tweets.append(format_time_sql(created_at))
-    # print(f"Longitud de tweets leídos con cursor: {len(filtered_tweets)}")
-    """
-    filtered_tweets = []
-    usernames_tweets = []
-    created_at_tweets = []
-    polarity_tweets = []
-    for tweet_status in tweets:
-        tweet = json.loads(json.dumps(tweet_status._json))
-        if tweet.get('retweeted_status'):
-            print('Avoiding retweets!')
-            cnt += 1
-        else:
-            clean_text = clean_tweet(decode_text(tweet['full_text']))
-            filtered_tweets.append(clean_text)
-            polarity_tweets.append(clf.get_sentiment(clean_text))
-            usernames_tweets.append(tweet['user']['screen_name'])
-            created_at = format_time_sql(format_time(tweet['created_at']))
-            created_at = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
-            created_at = created_at.astimezone(pytz.timezone('Europe/Madrid')).strftime('%Y-%m-%d %H:%M:%S')
-            created_at_tweets.append(format_time_sql(created_at))
-    print(f"Longitud de tweets leídos sin paginator: {len(filtered_tweets)}")
-    """
     users_info = {
         'text':filtered_tweets,
         'username':usernames_tweets,
@@ -158,7 +156,7 @@ def get_tweets_for_username(username, listener, clf, max_results=100, exclude='r
         exclude (str, optional): Option for the listener to add constrains to exclude tweets in the search. Defaults to 'retweets'.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: A Pandas.DataFrame containing the tweets, polarity and when was the tweet created.
     """
     if max_results > 100:
         max_results = 100
@@ -172,20 +170,23 @@ def get_tweets_for_username(username, listener, clf, max_results=100, exclude='r
         user_tweets.append(tweet.text)
         user_tweets_created_at.append(tweet.created_at)
     polarity = [clf.get_sentiment(tweet) for tweet in user_tweets]
-    data = {'text':user_tweets, 'polarity':polarity, 'created_at':user_tweets_created_at}
+    data = {
+        'text':user_tweets,
+        'polarity':polarity,
+        'created_at':user_tweets_created_at
+    }
     return pd.DataFrame.from_dict(data=data)
 
-def retrieve_info_from_paginator_response(response, clf):
-    tweets_text = []
-    tweets_created_at = []
-    polarity = []
-    for tweet in response:
-        tweets_text.append(tweet.text)
-        tweets_created_at.append(tweet.created_at)
-        polarity.append(clf.get_sentiment(tweet.text))
-    return {'text':tweets_text, 'polarity':polarity, 'created_at': tweets_created_at}
-
 def get_most_frequent_words_from_tweets(df, clf):
+    """Function that given a DataFrame gets the most frequents words. The text column must be named as 'text'.
+
+    Args:
+        df (Pandas.DataFrame): DataFrame containing the text.
+        clf (Classifier): Classifier with which the prediction will be made
+
+    Returns:
+        Pandas.DataFrame: A DataFame containing the most used words.
+    """
     content = ' '.join(df["text"])
     content = re.sub(r"http\S+", "", content)
     content = content.replace('RT ', ' ').replace('&amp;', 'and')

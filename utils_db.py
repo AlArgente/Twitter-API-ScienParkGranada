@@ -57,6 +57,19 @@ def check_table_exists_or_create_it(mydb, table_name='Twitter'):
     mycursor.close()
 
 def query_db(table_name='Twitter', table_attributes=None, **kwargs):
+    """Function that retrieves all the elements from a SQL Table.
+
+    Args:
+        table_name (str, optional): Table where search the tweets. Defaults to 'Twitter'.
+        table_attributes (list, optional): List of attributes to retrieve. Defaults to None.
+
+    Raises:
+        ValueError: If not table attributes given it raises an error.
+        ConnectionError: If cannont connect to the database it raises and error.
+
+    Returns:
+        Pandas.DataFrame: Al the elements from the table_name.
+    """
     if not table_attributes:
         raise ValueError("Give table attributes to extract.")
     dbcon = db_connection()
@@ -67,6 +80,19 @@ def query_db(table_name='Twitter', table_attributes=None, **kwargs):
     return pd.read_sql(query, con=dbcon)
 
 def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs):
+    """Function that retrieves the elements from a table in the last minutes. The number of minutes must be given in kwargs
+
+    Args:
+        table_name (str, optional): Table where search the tweets. Defaults to "Twitter".
+        table_attributes (list, optional): List of attributes to retrieve. Defaults to None.
+
+    Raises:
+        ValueError: If not table attributes given it raises an error.
+        ConnectionError: If cannont connect to the database it raises an error.
+
+    Returns:
+        Pandas.DataFrame: DataFrame with elements in the table_name in the last minutes.
+    """
     minutes = kwargs['minutes']
     if not table_attributes:
         raise ValueError("Give table attributes to extract.")
@@ -78,6 +104,17 @@ def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs)
     return pd.read_sql(query, con=dbcon)
 
 def query_total_tweets(table_name="Twitter"):
+    """Function to get the number of elements in a SQL table.
+
+    Args:
+        table_name (str, optional): Table to get the elements count. Defaults to "Twitter".
+
+    Raises:
+        ConnectionError: If cannot connect to DataBase, it raises an error.
+
+    Returns:
+        int: Returns the number of elements in the table.
+    """
     dbcon = db_connection()
     if not dbcon:
         raise ConnectionError("Error connecting to the database.")

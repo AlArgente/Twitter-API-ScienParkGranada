@@ -36,10 +36,6 @@ app.layout = html.Div(children=[
     html.Br(),
     html.Div(id='live-update-graph'),
     html.Div(id='live-update-bottom-graph'),
-    dcc.Input(id='input-1-state', type='text', value='Usuario'),
-    html.Button(id='submit-button-state-user', n_clicks=0, children='Submit user'),
-    dcc.Input(id='input-2-state', type='text', value='Hashtag'),
-    html.Button(id='submit-button-state-hashtag', n_clicks=0, children='Submit hashtag'),
     html.Div(id='output-state'),
 ]) # , className="dash-bootstrap")
 
@@ -62,25 +58,6 @@ def update_graph_live(n):
         ])
     ]
     return children
-
-@app.callback(OutputExt('output-state', 'children'),
-              InputExt('submit-button-state-user', 'n_clicks'),
-              State('input-1-state', 'value'))
-def update_output_with_username(n_clicks_user, input_user):
-    return f'''
-        The user button has been pressed {n_clicks_user} times,
-        and the user value is {input_user}.
-    '''
-
-@app.callback(OutputExt('output-state', 'children'),
-              InputExt('submit-button-state-hashtag', 'n_clicks'),
-              State('input-2-state', 'value'))
-def update_output_with_hashtag(n_clicks_hashtag, input_hashtag):
-    return f'''
-        The hashtag button
-        has been pressed {n_clicks_hashtag} and the hashtah
-        value is {input_hashtag}.
-    '''
 
 
 if __name__ == '__main__':
