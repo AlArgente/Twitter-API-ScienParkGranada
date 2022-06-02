@@ -40,7 +40,9 @@ class StreamListener(tweepy.Stream):
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
         sentiment = self.__sentiment_task.get_sentiment(text)
-        polarity = self.__polarity_str_to_int(sentiment)
+        print(f"La polaridad del texto es: {sentiment}")
+        # polarity = self.__polarity_str_to_int(sentiment)
+        polarity=sentiment
         user_location = remove_emoji_from_text(decode_text(status['user']['location'])) if status['user']['location'] is not None else 'Not specified'
         user_created_at = format_time(status['user']['created_at'])
         user_name = status['user']['screen_name']

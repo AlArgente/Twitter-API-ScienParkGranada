@@ -13,7 +13,7 @@ def main():
         print('DB Connected')
         # Create table if doesnt exists
         TABLE_NAME = 'Twitter'
-        TRACK_WORDS = ['#VamosRafa', '#FelizMiercoles']
+        TRACK_WORDS = ['#FelizJueves']
         check_table_exists_or_create_it(mydb, table_name=TABLE_NAME)
         mydb.close()
         # Load credentials

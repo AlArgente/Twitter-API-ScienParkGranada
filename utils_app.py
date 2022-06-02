@@ -159,6 +159,9 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10):
     kwargs = {'minutes':days}
     table_attributes= ['text', 'user_name', 'created_at', 'polarity'] if table_attributes is None else table_attributes
     df = func(table_name='Twitter', table_attributes=table_attributes, **kwargs)
+    if len(df) == 0:
+        # If there aren't any items saved, we don't show anything.
+        return ""
     # num_pos = df[df['polarity']==1]['polarity'].count()
     # num_neg = df[df['polarity']==-1]['polarity'].count()
     # num_neu = df[df['polarity']==0]['polarity'].count()
