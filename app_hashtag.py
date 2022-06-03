@@ -23,14 +23,13 @@ solar = [dbc.themes.SOLAR]
 app = DashProxy(__name__, prevent_initial_callbacks=True, transforms=[MultiplexerTransform()]) # , external_stylesheets=solar)
 app.config.external_stylesheets=bootstrap_theme
 app.title = 'Real-Time Twitter Monitor'
-# TODO: Define layouts and callbacks
 # server = app.server
 # app.run_server() # To run the server
 
 app.layout = html.Div(children=[
     html.H2('Monitorización de Twitter en tiempo real'),
     dcc.Interval(id='interval-component-slow',
-                 interval=30000, # 300000, # In miliseconds. 300000 = 5 minutes.
+                 interval=300000, # 300000, # In miliseconds. 300000 = 5 minutes.
                  n_intervals=0),
     # Here add more Divs to the layout
     html.Br(),
