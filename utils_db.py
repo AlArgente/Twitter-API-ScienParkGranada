@@ -85,24 +85,20 @@ def check_table_exists_or_create_it(mydb, table_name='Twitter'):
         mydb (MySQL connector): Connection to the database.
         table_name (str, optional): Name of the table to check. Defaults to 'Twitter'.
     """
-    mycursor = mydb.cursor()
+    cursor = mydb.cursor()
     try:
-        mycursor.execute("""
-                            SELECT COUNT(*)
-                            FROM '{0}'""".format(table_name)
-                         )
+        cursor.execute(f"SELECT COUNT(*) FROM '{table_name}'")
         print("Table exists.")
-    except sqlite3.OperationalError:
+    except sqlite3.OperationalError as e:
         if table_name.upper() in TablesEnum.__members__.keys():
             table_attributes = TablesEnum[table_name.upper()].value
         else:
-            raise ValueError(
-                f"The table {table_name} can't be created. Try with: " + ', '.join([t.name for t in TablesEnum]))
-        mycursor.execute("""CREATE TABLE {} ({})
-                            """.format(table_name, table_attributes))
+            raise ValueError(f"The table {table_name} can't be created. Try with: " + ', '.join([t.name for t in TablesEnum])) from e
+
+        cursor.execute(f'CREATE TABLE {table_name} ({table_attributes})')
         mydb.commit()
         print("Table created.")
-    mycursor.close()
+    cursor.close()
 
 
 def query_db(table_name='Twitter', table_attributes=None, **kwargs):
@@ -151,7 +147,7 @@ def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs)
         raise ConnectionError("Error connecting to the database.")
     attribute_query = ', '.join(list(table_attributes))
     #  query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQL
-    #query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now') and strftime({minutes})"  #  For SQLite3
+    # query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now') and strftime({minutes})"  #  For SQLite3
     query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now', '-{days} days') and datetime('now')"
     # > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQLite3
     return pd.read_sql(query, con=dbcon)
