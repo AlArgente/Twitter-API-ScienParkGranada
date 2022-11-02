@@ -31,7 +31,7 @@ def generate_table():
     df['created_at'] = df['created_at'].apply(lambda x: x.split(' ')[0])
     # df = df.sort_values(by="created_at", ascending=False)  # .drop(columns=['created_at'])
     df_columns = list(df.columns)
-    table_column_names = ['Tweet', "Usuario", "Fecha publicación", "Polaridad", "Tema"]
+    table_column_names = ['Tweet', "Usuario", "Fecha", "Polaridad", "Tema"]
     # table_column_names = ['Tweet', "Usuario", "Polaridad", "Tema"]
     return dash_table.DataTable(
         columns=[{"name": f"{table_column_names[i]}", "id": df_columns[i]} for i in range(len(df_columns))],
@@ -78,7 +78,7 @@ def generate_table_from_df(df):
         data=df.to_dict('records'),
         style_table={'height': '400px', 'overflowY': 'scroll'},
         #  fixed_rows={'headers': True},
-        style_cell={'minWidth': 15, 'width': 35, 'maxWidth': 800, 'text-align': 'center'},
+        style_cell={'minWidth': 15, 'width': 35, 'maxWidth': 1005, 'text-align': 'center'},
         style_cell_conditional=[
             {
                 'if': {'column_id': 'text'},

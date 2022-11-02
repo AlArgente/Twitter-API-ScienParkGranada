@@ -29,7 +29,8 @@ app.title = 'Real-Time Twitter Monitor'
 app.layout = html.Div(children=[
     html.H2('Monitorización de Twitter en tiempo real'),
     dcc.Interval(id='interval-component-slow',
-                interval=1.8e+6,# 30 minutes
+                # interval=1.8e+6,# 30 minutes
+                interval=10000,# For testing
                 n_intervals=0),
     # Here add more Divs to the layout
     html.Br(),
@@ -59,4 +60,4 @@ def update_graph_live(n):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

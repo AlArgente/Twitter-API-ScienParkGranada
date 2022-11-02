@@ -35,9 +35,10 @@ class StreamListener(tweepy.Stream):
         if 'retweeted_status' in status.keys():
             # Avoid retweets
             return True
-        if status['truncated']:
-            text = str(clean_tweet(decode_text(status['extended_tweet']['full_text'])))
-        else:
+        try:
+            if 'truncated' in status.keys():
+                text = str(clean_tweet(decode_text(status['extended_tweet']['full_text'])))
+        except Exception as e:
             text = str(clean_tweet(decode_text(status['text'])))
         #  print(f"User keys: {status['user'].keys()}")
         id_str = status['id_str']

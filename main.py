@@ -20,7 +20,7 @@ def main():
         topic_classifier = tweetnlp.load('topic_classification')  #  Using tweetnlp
         # Create table if doesnt exists
         TABLE_NAME = 'Twitter'
-        TRACK_WORDS = ['#BuenosDías', 'Telegram', 'Faker', 'Pokemon']
+        TRACK_WORDS = ['#BuenosDías', '#Twitter']
         check_table_exists_or_create_it(conn, table_name=TABLE_NAME)
         conn.close()
         # Load credentials
