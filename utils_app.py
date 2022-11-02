@@ -6,7 +6,7 @@ from matplotlib import use
 import plotly.graph_objs as go
 
 #  For wordcloud
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 from nltk.corpus import stopwords
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -128,9 +128,10 @@ def generate_wordcloud(df):
     #  mask = np.array(Image.open('img/SiluetaAlhambra.jpg'))
     # mask = np.array(Image.open('img/SiluetaAlhambra.png'))
     #  mask = np.array(Image.open('img/TwitterLogoPNGnbg.png'))
-    mask = np.array(Image.open('img/parquedelasciencias_nbg.png'))
+    # mask = np.array(Image.open('img/parquedelasciencias_nbg.png'))
+    mask = np.array(Image.open('img/Parque-Ciencias-Granada-removebg-preview.png'))
     #  mask = np.array(Image.open('img/provincia-de-granada.jpg'))
-    #  mask_colors = ImageColorGenerator(mask)
+    mask_colors = ImageColorGenerator(mask)
     text = get_frequencies_from_text(df['text'])
     #  text = get_text_joint(df['text'])
     print(text)
@@ -138,9 +139,9 @@ def generate_wordcloud(df):
     wc = WordCloud(width=mask.shape[1] * 5, height=mask.shape[0] * 5,
                    # width = 500, height = 400,
                    colormap='Set2', collocations=False,
-                   max_words=10000, background_color="white", mask=mask,
-                   #  color_func=mask_colors,
-                   contour_color='#023075', contour_width=3,
+                   max_words=50000, background_color="white", mask=mask,
+                   color_func=mask_colors, # words color
+                   contour_color='#023075', contour_width=1, # Border color and size
                    random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
     wc.to_file('img_saves/img_transparent.png')
     #  mydpi = 300
@@ -287,16 +288,17 @@ def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None):
     ], style={'width': '27%', 'display': 'inline-block'})
 
 
-def generate_topics_pie_chart_from_df(df):
+def generate_topics_pie_chart_from_df(df, width=69):
     topics_count = get_topics_count(df)
-    return generate_topics_pie_chart(topics_count)
+    return generate_topics_pie_chart(topics_count, width=width)
 
 
-def generate_topics_pie_chart(topics_count):
+def generate_topics_pie_chart(topics_count, width=68):
     """Function tha recieves a df with the topics and the topic counts
 
     Args:
-        df (_type_): _description_
+        topics_count (_type_): _description_
+        width (int): width size for the pie chart.
     """
     total = sum(topics_count.values())
     return html.Div(
@@ -334,7 +336,7 @@ def generate_topics_pie_chart(topics_count):
         },  #  style={'width': '50%', 'display': 'inline-block', 'text-align':'center'}),
         ),
         style={
-            "width": "68%",
+            "width": f"{width}%",
             "display": "inline-block",
             "padding-top": "5px",
             "padding-left": "1px",
@@ -398,7 +400,7 @@ def generate_scatter_graph(df):
     #  return "In process"
 
 
-def generate_barplot_most_used_words(df, clf):
+def generate_barplot_most_used_words(df, clf, width=49):
     fd = get_most_frequent_words_from_tweets(df, clf)
     return html.Div([
         dcc.Graph(
@@ -423,4 +425,4 @@ def generate_barplot_most_used_words(df, clf):
                 }
             }
         )
-    ], style={'width': '49%', 'display': 'inline-block', 'padding': '0 0 0 20'})
+    ], style={'width': f"{width}%", 'display': 'inline-block', 'padding': '0 0 0 20'})

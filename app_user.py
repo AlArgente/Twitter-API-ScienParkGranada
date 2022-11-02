@@ -93,15 +93,14 @@ def update_graph_live_user(n, input_user):
     print(f"User df head: {user_df.head()}")
     children = [
         html.Div([
-            generate_timeline_user(input_user),
+            generate_timeline_user("DaSCI_es"),
             generate_timeline_user("ParqueCiencias"),
+            generate_timeline_user(input_user),
             generate_pie_chart_from_df(df=user_df, username=input_user),
             # generate_scatter_graph(user_df),
-            generate_barplot_most_used_words(user_df, clf=classifier),
-            # generate_pie_char_tweets_user(input_user, listener=client_listener, clf=classifier, max_results=100)
-            # generate_pie_chart_less(num_neg=num_neg, num_neu=num_neu, num_pos=num_pos),
-            # generate_pie_chart(days="all"),
-            # generate_pie_chart(days=5)
+            generate_barplot_most_used_words(user_df, clf=classifier, width=43),
+            # html.Br(),
+            generate_topics_pie_chart_from_df(user_df, width=43),
         ])
     ]
     return children

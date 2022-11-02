@@ -203,7 +203,7 @@ def get_tweets_for_username(username, listener, clf, topic_clf=None, max_results
     #  polarity = [clf.get_sentiment(tweet) for tweet in user_tweets] # Using transformers, works
     polarity = [clf.sentiment(tweet)['label'] for tweet in user_tweets]  #  Using tweetnlp, works
     #  topics = [topic_clf.get_topic(tweet) for tweet in user_tweets] # Using transofrmers, works
-    topics = [topic_clf.sentiment(tweet)['label'] for tweet in user_tweets]  #  Using tweetnlp, works
+    topics = [', '.join(topic_clf.topic(tweet)['label']) for tweet in user_tweets]  #  Using tweetnlp, works
     data = {
         'text': user_tweets,
         'polarity': polarity,
