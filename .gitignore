@@ -134,4 +134,10 @@ dmypy.json
 .pyre/
 
 # Credential files
-./credetials.py
+credentials.py
+credentials_elevated.py
+
+# Other files
+.idea
+.DS_Store
+

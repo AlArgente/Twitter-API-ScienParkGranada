@@ -1,10 +1,33 @@
 """Functions to create the database, to create the tables and other possible functions on the database.
 """
+import sqlite3
 import pandas as pd
 import mysql.connector
 from db_tables import TablesEnum
+from db_names import DB_NAME
 
-def db_connection(host='localhost', user='alberto', passwd='passwd', database='TwitterDB', charset='utf8mb4'):
+
+def db_connection():
+    return sqlite3.connect(DB_NAME)
+
+
+def check_connection_db(conn):
+    """Function that check if a sqlite3 connection is on
+
+    Args:
+        conn (sqlite3.connection): Connection with a sqlite3 databse.
+
+    Returns:
+        bool: True/False if can create a cursor to the database.
+    """
+    try:
+        conn.cursor()
+        return True
+    except Exception:
+        return False
+
+
+def db_connection_sql(host='localhost', user='alberto', passwd='passwd', database='TwitterDB', charset='utf8mb4'):
     return mysql.connector.connect(
         host=host,
         user=user,
@@ -13,22 +36,46 @@ def db_connection(host='localhost', user='alberto', passwd='passwd', database='T
         charset=charset
     )
 
-def insert_data_on_table(mydb, data, table_name):
-    print('Inserting data on db.')
-    cursor = mydb.cursor()
-    sql = f"INSERT INTO {table_name} (id_str, created_at, text, polarity,\
+
+def insert_data_on_table(conn, data, table_name):
+    """Function that insert data into a table from a sqlite3 databse.
+    The database must exits.
+
+    Args:
+        mydb (sqlite3.connection): Connection with the sqlite3 database
+        data (json): Data to insert
+        table_name (str): Table name
+    """
+    curr = conn.cursor()
+    sql = f"INSERT INTO {table_name} (id_str, created_at, text, polarity, topic,\
         user_created_at, user_location, user_name, user_id, \
             longitude, latitude, retweet_count, favorite_count) VALUES \
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    val = (data['id_str'], data['created_at'], data['text'], \
+           data['polarity'], data['topic'], data['user_created_at'], data['user_location'], \
+           data['user_name'], data['user_id'], data['longitude'], \
+           data['latitude'], data['retweet_count'], data['favorite_count'])
+    curr.execute(sql, val)
+    conn.commit()
+    curr.close()
 
-    val = (data['id_str'], data['created_at'], data['text'],\
-                data['polarity'], data['user_created_at'], data['user_location'],\
-                data['user_name'], data['user_id'], data['longitude'], \
-                data['latitude'], data['retweet_count'], data['favorite_count'])
+
+def insert_data_on_table_sql(mydb, data, table_name):
+    print(f"Inserting data on db: {data['created_at']}.")
+    cursor = mydb.cursor()
+    sql = f"INSERT INTO {table_name} (id_str, created_at, text, polarity, topic,\
+        user_created_at, user_location, user_name, user_id, \
+            longitude, latitude, retweet_count, favorite_count) VALUES \
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+
+    val = (data['id_str'], data['created_at'], data['text'], \
+           data['polarity'], data['topic'], data['user_created_at'], data['user_location'], \
+           data['user_name'], data['user_id'], data['longitude'], \
+           data['latitude'], data['retweet_count'], data['favorite_count'])
     cursor.execute(sql, val)
     mydb.commit()
-    print('Data inserted on db.')
     cursor.close()
+
 
 def check_table_exists_or_create_it(mydb, table_name='Twitter'):
     """Function that check if a table exists on the database, and create
@@ -39,22 +86,24 @@ def check_table_exists_or_create_it(mydb, table_name='Twitter'):
         table_name (str, optional): Name of the table to check. Defaults to 'Twitter'.
     """
     mycursor = mydb.cursor()
-    mycursor.execute("""
-                        SELECT COUNT(*)
-                        FROM information_schema.tables
-                        WHERE table_name = '{0}'
-                        """.format(table_name)
-    )
-    if mycursor.fetchone()[0] != 1:
+    try:
+        mycursor.execute("""
+                            SELECT COUNT(*)
+                            FROM '{0}'""".format(table_name)
+                         )
+        print("Table exists.")
+    except sqlite3.OperationalError:
         if table_name.upper() in TablesEnum.__members__.keys():
             table_attributes = TablesEnum[table_name.upper()].value
         else:
-            raise ValueError(f"The table {table_name} can't be created. Try with: " + ', '.join([t.name for t in TablesEnum]))
+            raise ValueError(
+                f"The table {table_name} can't be created. Try with: " + ', '.join([t.name for t in TablesEnum]))
         mycursor.execute("""CREATE TABLE {} ({})
                             """.format(table_name, table_attributes))
         mydb.commit()
         print("Table created.")
     mycursor.close()
+
 
 def query_db(table_name='Twitter', table_attributes=None, **kwargs):
     """Function that retrieves all the elements from a SQL Table.
@@ -76,8 +125,9 @@ def query_db(table_name='Twitter', table_attributes=None, **kwargs):
     if not dbcon:
         raise ConnectionError("Error connecting to the database.")
     attribute_query = ', '.join(list(table_attributes))
-    query = f"SELECT {attribute_query} FROM {table_name} ORDER BY {table_attributes[-1]} DESC"
+    query = f"SELECT {attribute_query} FROM {table_name}"
     return pd.read_sql(query, con=dbcon)
+
 
 def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs):
     """Function that retrieves the elements from a table in the last minutes. The number of minutes must be given in kwargs
@@ -93,15 +143,19 @@ def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs)
     Returns:
         Pandas.DataFrame: DataFrame with elements in the table_name in the last minutes.
     """
-    minutes = kwargs['minutes']
+    days = kwargs['days']
     if not table_attributes:
         raise ValueError("Give table attributes to extract.")
     dbcon = db_connection()
     if not dbcon:
         raise ConnectionError("Error connecting to the database.")
     attribute_query = ', '.join(list(table_attributes))
-    query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC"
+    #  query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQL
+    #query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now') and strftime({minutes})"  #  For SQLite3
+    query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now', '-{days} days') and datetime('now')"
+    # > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQLite3
     return pd.read_sql(query, con=dbcon)
+
 
 def query_total_tweets(table_name="Twitter"):
     """Function to get the number of elements in a SQL table.

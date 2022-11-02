@@ -29,8 +29,8 @@ app.title = 'Real-Time Twitter Monitor'
 app.layout = html.Div(children=[
     html.H2('Monitorización de Twitter en tiempo real'),
     dcc.Interval(id='interval-component-slow',
-                 interval=300000, # 300000, # In miliseconds. 300000 = 5 minutes.
-                 n_intervals=0),
+                interval=10000, # 300000, # In miliseconds. 300000 = 5 minutes.
+                n_intervals=0),
     # Here add more Divs to the layout
     html.Br(),
     html.Div(id='live-update-graph'),
@@ -39,9 +39,8 @@ app.layout = html.Div(children=[
 ]) # , className="dash-bootstrap")
 
 @app.callback(Output('live-update-graph', 'children'),
-              [Input('interval-component-slow', 'n_intervals')])
+            [Input('interval-component-slow', 'n_intervals')])
 def update_graph_live(n):
-    print("Aquí estoy!")
     # First load data and prepare data to show in the layout
     data_from = "Twitter. Hashtag: #Eurovision, #FelizMiércoles"
     total_tweets = query_total_tweets()
