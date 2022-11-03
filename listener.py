@@ -66,11 +66,8 @@ class StreamListener(tweepy.Stream):
         favorite_count = status['favorite_count']
 
         data_to_store = {
-            'id_str': id_str, 'created_at': created_at, 'text': text, 'sentiment': sentiment, 'user_id': user_id,
-            'polarity': polarity, 'topic': topic, 'user_location': user_location, 'user_created_at': user_created_at,
-            'user_name': user_name,
-            'longitude': longitude, 'latitude': latitude, 'retweet_count': retweet_count,
-            'favorite_count': favorite_count
+            'id_str': id_str, 'created_at': created_at, 'text': text, 'user_id': user_id,
+            'polarity': polarity, 'topic': topic, 'user_name': user_name
         }
 
         # Store data into msql

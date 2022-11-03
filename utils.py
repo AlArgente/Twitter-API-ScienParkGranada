@@ -1,10 +1,6 @@
 # Document with some utils functions
 import re
-import json
 from collections import Counter
-from venv import create
-import emoji
-from matplotlib.pyplot import text
 import pandas as pd
 import unicodedata
 import tweepy
@@ -22,9 +18,9 @@ TIMEZONE = pytz.timezone('Europe/Madrid')
 
 
 def clean_tweet(tweet):
-    ''' 
+    """
     Use simple regex to clean tweet text by removing links and special characters
-    '''
+    """
     return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t]) \
                                 |(\w+:\/\/\S+)", " ", tweet).split())
 
@@ -130,6 +126,7 @@ def get_tweets_by_hashtag(api, clf, topic_clf=None, hashtag="#FelizMartes", max_
     Args:
         api (Tweepy.API): Connection to the Twitter API
         clf (Classifier): The classifier selected to make the predictions.
+        topic_clf (TopicClassifier): The topic classifier.
         hashtag (str, optional): Hashtag to search Tweets from. Defaults to "#FelizMartes".
         max_tweets (int, optional): Max number of tweets to search in each call. Defaults to 100.
         max_limit (int, optional): Max number of tweets to search. Defaults to 1000.
@@ -137,9 +134,7 @@ def get_tweets_by_hashtag(api, clf, topic_clf=None, hashtag="#FelizMartes", max_
     Returns:
         Pandas.DataFrame: DataFrame that contains the tweets, the user that created the tweet, the date and the polarity.
     """
-    #  First method: Only get 100 tweets max
-    #  tweets = list(api.search_tweets(q=hashtag, count=max_tweets, tweet_mode = "extended", exclude='retweets'))
-    # Second method to get max_limit tweets from hashtag
+    # Method to get max_limit tweets from hashtag
     max_limit = min(max_tweets, max_limit)
     tweets_cursor = list(
         tweepy.Cursor(api.search_tweets, q=hashtag, count=100, tweet_mode="extended", exclude="retweets").items(
@@ -152,12 +147,9 @@ def get_tweets_by_hashtag(api, clf, topic_clf=None, hashtag="#FelizMartes", max_
     for tweet in tweets_cursor:
         clean_text = clean_tweet(decode_text(tweet.full_text))
         filtered_tweets.append(clean_text)
-        #  polarity_tweets.append(clf.get_sentiment(clean_text)) # Using huggingface, works
         polarity_tweets.append(clf.sentiment(clean_text)['label'])  #  Using tweetnlp
-        #  topic = topic_clf.get_topic(clean_text) # Using huggingface, works
         topic = topic_clf.topic(clean_text)['label']  #  Using tweetnlp
         topic = ', '.join(topic) if len(topic) else "No topic detected."
-        #  print(f"Topic: {topic_clf.get_topic(clean_text)[0]}")
         topic_tweets.append(topic)
         usernames_tweets.append(tweet.user.screen_name)
         created_at = tweet.created_at
@@ -200,9 +192,7 @@ def get_tweets_for_username(username, listener, clf, topic_clf=None, max_results
     for tweet in user_tweets_response:
         user_tweets.append(tweet.text)
         user_tweets_created_at.append(tweet.created_at)
-    #  polarity = [clf.get_sentiment(tweet) for tweet in user_tweets] # Using transformers, works
     polarity = [clf.sentiment(tweet)['label'] for tweet in user_tweets]  #  Using tweetnlp, works
-    #  topics = [topic_clf.get_topic(tweet) for tweet in user_tweets] # Using transofrmers, works
     topics = [', '.join(topic_clf.topic(tweet)['label']) for tweet in user_tweets]  #  Using tweetnlp, works
     data = {
         'text': user_tweets,
@@ -232,20 +222,14 @@ def get_most_frequent_words_from_tweets(df, clf):
     stopwords_spa = stopwords.words('spanish')
     text_tokenized = [word for word in word_tokenize(content) if
                       word not in stopwords_eng and word not in stopwords_spa]
-    #  text_tokenized = [word for tweet in text for word in word_tokenize(tweet) if word not in stopwords_eng and word not in stopwords_spa]
     print(f"Text_token 0: {text_tokenized[0]}")
     fdist = FreqDist(text_tokenized)
     fd = pd.DataFrame(fdist.most_common(16), columns=["Word", "Frequency"]).drop([0]).reindex()
-    #  fd['Polarity'] = fd['Word'].apply(lambda x: clf.get_sentiment(x)) # Using transformers
     fd['Polarity'] = fd['Word'].apply(lambda x: clf.sentiment(x)['label'])  #  Using tweetnlp
     fd['Marker_Color'] = fd['Polarity'].apply(lambda x: 'rgba(255, 50, 50, 0.6)' if x == "Negative" else \
         ('rgba(184, 247, 212, 0.6)' if x == "Positive" else 'rgba(131, 90, 241, 0.6)'))
     fd['Line_Color'] = fd['Polarity'].apply(lambda x: 'rgba(255, 50, 50, 1)' if x == "Negative" else \
         ('rgba(184, 247, 212, 1)' if x == "Positive" else 'rgba(131, 90, 241, 1)'))
-    #  fd['Marker_Color'] = fd['Polarity'].apply(lambda x: 'rgba(255, 50, 50, 0.6)' if x < -0.1 else \
-    #      ('rgba(184, 247, 212, 0.6)' if x > 0.1 else 'rgba(131, 90, 241, 0.6)'))
-    #  fd['Line_Color'] = fd['Polarity'].apply(lambda x: 'rgba(255, 50, 50, 1)' if x < -0.1 else \
-    #      ('rgba(184, 247, 212, 1)' if x > 0.1 else 'rgba(131, 90, 241, 1)'))
     return fd
 
 
@@ -273,14 +257,29 @@ def get_frequencies_from_text(text):
 
 
 def get_text_clean(text):
+    """
+    Function that removes the stopwords (english and spanish stopwords) from the text
+    Args:
+        text: Text to clean
+
+    Returns: Text without stopwords
+
+    """
     stopwords_eng = stopwords.words('english')
     stopwords_eng += ['#', '"', ',', '.']
     stopwords_spa = stopwords.words('spanish')
-    # text_tokenized_clean_joint = ' '.join([' '.join([word for word in word_tokenize(sentence) if word not in stopwords_eng and word not in stopwords_spa]) for sentence in text])
     return [[word for word in word_tokenize(clean_tweet(sentence)) if
              word not in stopwords_eng and word not in stopwords_spa] for sentence in text]
 
 
 def get_text_joint(text):
+    """
+    Function that removes the stopwords from the tweets and then join all the tweets in one str.
+    Args:
+        text: List of tweets.
+
+    Returns: All the cleaned tweets joined in one str.
+
+    """
     text_tokenized_clean = get_text_clean(text)
     return ' '.join([' '.join(list(sentence)) for sentence in text_tokenized_clean])

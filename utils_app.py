@@ -2,42 +2,40 @@ import pandas as pd
 import numpy as np
 import datetime
 from dash import html, dash_table, dcc
-from matplotlib import use
 import plotly.graph_objs as go
 
 #  For wordcloud
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
-from nltk.corpus import stopwords
 from PIL import Image
-import matplotlib.pyplot as plt
 
-from utils import format_time_sql, get_tweets_by_hashtag, get_most_frequent_words_from_tweets, \
-    get_num_pos_neg_neu_from_df, get_topics_count, get_frequencies_from_text, get_text_joint
+from utils import format_time_sql, get_most_frequent_words_from_tweets, \
+    get_num_pos_neg_neu_from_df, get_topics_count, get_frequencies_from_text
 from utils_db import query_db_last_minutes, query_db
 
 
-def generate_table_sql():
-    df = query_db(table_attributes=['text', 'user_name', 'created_at'])  #  Añadir Polaridad y Topics
-    return generate_table_from_df(df)
-
-
 def generate_table():
+    """
+    Function that create a DataTable with tweets and some info about them, such as the user that published the
+    tweet, the date when it was published, and the polarity and topic for the tweet.
+
+    This functions retrieve the data from the sqlite3 database.
+
+    Returns (dash.DataTable): A table with the content
+
+    """
     df = query_db(table_attributes=['text', 'user_name', 'created_at', 'polarity', 'topic'])
-    # Format to strftime yyyy-mm-dd HH:MM:SS
+    # Format created_At column to strftime yyyy-mm-dd HH:MM:SS
     df['created_at'] = df['created_at'].apply(lambda x: format_time_sql(x))
     # Sort by date, latest tweets first
     df = df.sort_values(by="created_at", ascending=False)
     # Take only the day, not hour of publish
     df['created_at'] = df['created_at'].apply(lambda x: x.split(' ')[0])
-    # df = df.sort_values(by="created_at", ascending=False)  # .drop(columns=['created_at'])
     df_columns = list(df.columns)
     table_column_names = ['Tweet', "Usuario", "Fecha", "Polaridad", "Tema"]
-    # table_column_names = ['Tweet', "Usuario", "Polaridad", "Tema"]
     return dash_table.DataTable(
         columns=[{"name": f"{table_column_names[i]}", "id": df_columns[i]} for i in range(len(df_columns))],
         data=df.to_dict('records'),
         style_table={'height': '400px', 'overflowY': 'scroll'},
-        #  
         fixed_rows={'headers': True},
         style_cell={'minWidth': 15, 'width': 35, 'maxWidth': 800, 'text-align': 'center'},
         style_cell_conditional=[
@@ -109,6 +107,14 @@ def generate_table_from_df(df):
 
 
 def generate_timeline_user(username="DaSCI_es"):
+    """
+    Function that create an Iframe with the timeline about a given user.
+    Args:
+        username: Username to extract the timeline from
+
+    Returns (html.Iframe): Iframe with the user's timeline.
+
+    """
     return html.Iframe(
         srcDoc=f'''
                     <a class="twitter-timeline" data-theme="light" href="https://twitter.com/{username}?ref_src=twsrc%5Etfw">
@@ -121,10 +127,18 @@ def generate_timeline_user(username="DaSCI_es"):
     )
 
 
-def generate_wordcloud(df):
-    #  text = ' '.join(df['text'])
-    #  print(text[0])
-    #  stopwords = set(STOPWORDS)
+def generate_wordcloud(text):
+    """
+    Function that creates a wordcloud given a DataFrame, and it uses an image as a mask and fill the Image with
+    the given text.
+
+    Args:
+        text (Union[pd.Series, list]): All the text that will be used to fill the wordcloud.
+
+    Returns (html.Center): A HTML component with the wordcloud image at the center of it.
+
+    """
+    # Posible masks to use
     #  mask = np.array(Image.open('img/SiluetaAlhambra.jpg'))
     # mask = np.array(Image.open('img/SiluetaAlhambra.png'))
     #  mask = np.array(Image.open('img/TwitterLogoPNGnbg.png'))
@@ -132,9 +146,8 @@ def generate_wordcloud(df):
     mask = np.array(Image.open('img/Parque-Ciencias-Granada-removebg-preview.png'))
     #  mask = np.array(Image.open('img/provincia-de-granada.jpg'))
     mask_colors = ImageColorGenerator(mask)
-    text = get_frequencies_from_text(df['text'])
+    text = get_frequencies_from_text(text)
     #  text = get_text_joint(df['text'])
-    print(text)
     mask[mask == 0] = 255
     wc = WordCloud(width=mask.shape[1] * 5, height=mask.shape[0] * 5,
                    # width = 500, height = 400,
@@ -144,11 +157,6 @@ def generate_wordcloud(df):
                    contour_color='#023075', contour_width=1, # Border color and size
                    random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
     wc.to_file('img_saves/img_transparent.png')
-    #  mydpi = 300
-    #  plt.imshow(wc, interpolation="bilinear")
-    #  plt.axis('off')
-    #  plt.savefig('img_saves/img_transparent.png', dpi=mydpi, transparent=True, format='png')
-    #  plt.savefig('/home/alberto/Escritorio/TFM/code/wordcloud_attentionmodel_exp2_propaganda_transparent.png', dpi=mydpi, transparent=True, format='png')
     return html.Center(html.Img(src=wc.to_image()))
 
 
@@ -157,6 +165,7 @@ def generate_pie_chart_from_df(df, username, days=10):
     positive, negative and neutral.
 
     Args:
+        username (str): Username.
         df (pd.DataFrame): A Pandas DataFrame that contains the tweets and its labels.
         days (int, optional): Time period to see tweets from to today. Defaults to 10.
     
@@ -167,29 +176,7 @@ def generate_pie_chart_from_df(df, username, days=10):
     return generate_pie_chart_less(num_pos=num_pos, num_neg=num_neg, num_neu=num_neu, username=username)
 
 
-def generate_pie_char_tweets_user(username, listener, clf, max_results=100, exclude='retweets'):
-    if max_results > 100:
-        max_results = 100
-    elif max_results <= 0:
-        max_results = 20
-    user_id = listener.get_user_id_by_username(username=username)
-    user_tweets_response = listener.get_users_tweets(id=user_id, max_results=max_results, exclude=exclude)
-    #  print(f"Ya he leído los tweets de {username}")
-    user_tweets = [tweet['text'] for tweet in user_tweets_response['data']]
-    #  print("Llego aquí!")
-    polarity = [clf.get_sentiment(tweet) for tweet in user_tweets]
-    data = {'text': user_tweets, 'polarity': polarity}
-    #  polarity = [TextBlob.polarity(tweet).sentiment for tweet in user_tweets]
-    #  print(f"Ya tengo la polaridad de los tweets de {username}")
-    # df_user = pd.DataFrame([user_tweets, polarity], columns=['text', 'polarity'])
-    df_user = pd.DataFrame.from_dict(data=data)
-    #  print(f"Ya he creado el DataFrame: {df_user}")
-    num_pos, num_neg, num_neu = get_num_pos_neg_neu_from_df(df_user)
-    #  print(f"Positivos: {num_pos}. Negativos: {num_neg}. Neutros: {num_neu}.")
-    return generate_pie_chart_less(num_pos=num_pos, num_neg=num_neg, num_neu=num_neu, username=username)
-
-
-def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10):
+def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, hashtag='...'):
     """Function that generate a Dash Pie Chart for a given table_name and it's attributes for the last days selected
     or for the full time period.
 
@@ -202,13 +189,8 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10):
         Dash html.Div: A Dash html.Div that contains the Pie Chart, so it can be easily inserted into the Dash App.
     """
     func = query_db if isinstance(days, str) else query_db_last_minutes
-    title_chart = "Numero de tweets con el hashtag #..." if isinstance(days,
+    title_chart = f"Numero de tweets con el hashtag #{hashtag}" if isinstance(days,
                                                                        str) else f"Número de tweets en los últimos {days} días."
-
-    def days_to_date(days):
-        import time
-        date = float(days * 24 * 60 * 60)
-        return datetime.datetime.fromtimestamp((time.time() - date)).strftime('%Y-%m-%d %H:%M:%S')
 
     kwargs = {'days': days} if isinstance(days, str) else {'days': int(days)}
 
@@ -220,6 +202,9 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10):
         return ""
 
     num_pos, num_neg, num_neu = get_num_pos_neg_neu_from_df(df)
+    return generate_pie_chart_less(num_pos, num_neg, num_neu, username=hashtag, title=title_chart)
+
+    """
     return html.Div([
         dcc.Graph(
             id='pie-chart',
@@ -250,12 +235,15 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10):
             }
         )
     ], style={'height': 450, 'width': '27%', 'display': 'inline-block'})
+    """
 
 
-def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None):
+def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None, title=None):
     if username is None:
         username = 'usuario'
     total = num_neg + num_neu + num_pos
+    if title is None:
+        title = f'Últimos {total} tweets de {username}.'
     return html.Div([
         dcc.Graph(
             id='pie-chart',
@@ -272,7 +260,7 @@ def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None):
                 ],
                 'layout': {
                     'showLeyend': False,
-                    'title': f'Últimos {total} tweets de {username}.',
+                    'title': title,
                     'annotations': [
                         dict(
                             text='{}'.format(total),
@@ -401,6 +389,16 @@ def generate_scatter_graph(df):
 
 
 def generate_barplot_most_used_words(df, clf, width=49):
+    """
+    Function that generate a bar plot with the most frequent words given a list of tweets.
+    Args:
+        df (pandas.DataFrame): DataFrame with the tweets
+        clf (tweetnlp.Classifier): A sentiment analysis classifier
+        width (int): Width for the bar plot. Default 49.
+
+    Returns (html.Div): A html.Div with the generated bar plot.
+
+    """
     fd = get_most_frequent_words_from_tweets(df, clf)
     return html.Div([
         dcc.Graph(

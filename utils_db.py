@@ -3,11 +3,25 @@
 import sqlite3
 import pandas as pd
 import mysql.connector
-from db_tables import TablesEnum
-from db_names import DB_NAME
+
+from enum import Enum
+
+DB_NAME = "./test.db"
+TABLE_NAME = 'Twitter'
+TRACK_WORDS = ['#BuenosDías', '#Twitter']
+
+
+class TablesEnum(Enum):
+    TWITTER = "id INTEGER PRIMARY KEY AUTOINCREMENT, id_str VARCHAR(255), created_at DATETIME, text VARCHAR(1025), \
+        polarity VARCHAR(255), topic VARCHAR(255), user_name VARCHAR(255), user_id VARCHAR(255)"
 
 
 def db_connection():
+    """
+    Function that create a connection to a sqlit3 database
+    Returns: Object with the connection to the database.
+
+    """
     return sqlite3.connect(DB_NAME)
 
 
@@ -42,39 +56,20 @@ def insert_data_on_table(conn, data, table_name):
     The database must exits.
 
     Args:
-        mydb (sqlite3.connection): Connection with the sqlite3 database
+        conn (sqlite3.connection): Connection with the sqlite3 database
         data (json): Data to insert
         table_name (str): Table name
     """
     curr = conn.cursor()
     sql = f"INSERT INTO {table_name} (id_str, created_at, text, polarity, topic,\
-        user_created_at, user_location, user_name, user_id, \
-            longitude, latitude, retweet_count, favorite_count) VALUES \
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    val = (data['id_str'], data['created_at'], data['text'], \
-           data['polarity'], data['topic'], data['user_created_at'], data['user_location'], \
-           data['user_name'], data['user_id'], data['longitude'], \
-           data['latitude'], data['retweet_count'], data['favorite_count'])
+            user_name, user_id) VALUES \
+            (?, ?, ?, ?, ?, ?, ?)"
+    val = (data['id_str'], data['created_at'], data['text'],
+           data['polarity'], data['topic'], data['user_id'],
+           data['user_name'])
     curr.execute(sql, val)
     conn.commit()
     curr.close()
-
-
-def insert_data_on_table_sql(mydb, data, table_name):
-    print(f"Inserting data on db: {data['created_at']}.")
-    cursor = mydb.cursor()
-    sql = f"INSERT INTO {table_name} (id_str, created_at, text, polarity, topic,\
-        user_created_at, user_location, user_name, user_id, \
-            longitude, latitude, retweet_count, favorite_count) VALUES \
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-
-    val = (data['id_str'], data['created_at'], data['text'], \
-           data['polarity'], data['topic'], data['user_created_at'], data['user_location'], \
-           data['user_name'], data['user_id'], data['longitude'], \
-           data['latitude'], data['retweet_count'], data['favorite_count'])
-    cursor.execute(sql, val)
-    mydb.commit()
-    cursor.close()
 
 
 def check_table_exists_or_create_it(mydb, table_name='Twitter'):
