@@ -22,7 +22,3 @@ File app_hashtag.py shows a table with tweets, and some statistics about them an
 Example 1 of app_hashtag:
 
 ![Example of app_hashtag](img/Example_app_hashtag1.png)
-
-Example 2 of app_hashtag:
-
-![Example of app_hashtag](img/Example_app_hashtag2.png)
