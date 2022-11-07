@@ -234,9 +234,9 @@ def get_most_frequent_words_from_tweets(df, clf):
 
 
 def get_num_pos_neg_neu_from_df(df):
-    num_pos = df[df['polarity'] == "positive"]['polarity'].count()
-    num_neg = df[df['polarity'] == "negative"]['polarity'].count()
-    num_neu = df[df['polarity'] == "neutral"]['polarity'].count()
+    num_pos = df[df['polarity'] == "Positivo"]['polarity'].count()
+    num_neg = df[df['polarity'] == "Negativo"]['polarity'].count()
+    num_neu = df[df['polarity'] == "Neutro"]['polarity'].count()
     return num_pos, num_neg, num_neu
 
 

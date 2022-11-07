@@ -65,8 +65,8 @@ def insert_data_on_table(conn, data, table_name):
             user_name, user_id) VALUES \
             (?, ?, ?, ?, ?, ?, ?)"
     val = (data['id_str'], data['created_at'], data['text'],
-           data['polarity'], data['topic'], data['user_id'],
-           data['user_name'])
+           data['polarity'], data['topic'], data['user_name'],
+           data['user_id'])
     curr.execute(sql, val)
     conn.commit()
     curr.close()
@@ -88,7 +88,8 @@ def check_table_exists_or_create_it(mydb, table_name='Twitter'):
         if table_name.upper() in TablesEnum.__members__.keys():
             table_attributes = TablesEnum[table_name.upper()].value
         else:
-            raise ValueError(f"The table {table_name} can't be created. Try with: " + ', '.join([t.name for t in TablesEnum])) from e
+            raise ValueError(
+                f"The table {table_name} can't be created. Try with: " + ', '.join([t.name for t in TablesEnum])) from e
 
         cursor.execute(f'CREATE TABLE {table_name} ({table_attributes})')
         mydb.commit()
@@ -116,11 +117,13 @@ def query_db(table_name='Twitter', table_attributes=None, **kwargs):
     if not dbcon:
         raise ConnectionError("Error connecting to the database.")
     attribute_query = ', '.join(list(table_attributes))
-    query = f"SELECT {attribute_query} FROM {table_name}"
+    query = f"SELECT {attribute_query} FROM {table_name} DESC LIMIT 100"
+    # We take 100, don't need to show more as people won't interact with it.
+    # query = f"SELECT {attribute_query} FROM {table_name}"
     return pd.read_sql(query, con=dbcon)
 
 
-def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs):
+def query_db_last_days(table_name="Twitter", table_attributes=None, **kwargs):
     """Function that retrieves the elements from a table in the last minutes. The number of minutes must be given in kwargs
 
     Args:
@@ -143,8 +146,8 @@ def query_db_last_minutes(table_name="Twitter", table_attributes=None, **kwargs)
     attribute_query = ', '.join(list(table_attributes))
     #  query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQL
     # query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now') and strftime({minutes})"  #  For SQLite3
-    query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now', '-{days} days') and datetime('now')"
-    # > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQLite3
+    # For asuming we do not exceed the RAM limit, we set a 10ks limit for the tweets
+    query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now', '-{days} days') and datetime('now') LIMIT 10000"
     return pd.read_sql(query, con=dbcon)
 
 
@@ -165,3 +168,38 @@ def query_total_tweets(table_name="Twitter"):
         raise ConnectionError("Error connecting to the database.")
     query = f"SELECT COUNT(*) from {table_name}"
     return pd.read_sql(query, con=dbcon).iloc[0].values[0]
+
+
+def query_num_pos_neg_neu_from_db(table_name='Twitter'):
+    """
+    Function to query the number of positives, negatives and neutral tweets from the database
+    Args:
+        table_name:
+
+    Returns:
+
+    """
+    dbcon = db_connection()
+    if not dbcon:
+        raise ConnectionError("Error connecting to the database.")
+    query_num_pos = "WHERE polarity='Positivo'"
+    query_num_neg = "WHERE polarity='Negativo'"
+    query_num_neu = "WHERE polarity='Neutro'"
+    curr = dbcon.cursor()
+    num_pos = query_count_from_db(curr=curr, constraints=query_num_pos)
+    num_neg = query_count_from_db(curr=curr, constraints=query_num_neg)
+    num_neu = query_count_from_db(curr=curr, constraints=query_num_neu)
+    curr.close()
+    dbcon.close()
+    return num_pos, num_neg, num_neu
+
+
+def query_count_from_db(dbcon=None, curr=None, table_name='Twitter', constraints=''):
+    if dbcon is None and curr is None:
+        dbcon = db_connection()
+        if not dbcon:
+            raise ConnectionError("Error connecting to the database.")
+    if dbcon and curr is None:
+        curr = dbcon.cursor()
+    query = f"SELECT count(*) from {table_name} {constraints}"
+    return curr.execute(query).fetchone()[0]

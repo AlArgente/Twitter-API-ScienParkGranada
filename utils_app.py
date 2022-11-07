@@ -9,11 +9,11 @@ from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 from PIL import Image
 
 from utils import format_time_sql, get_most_frequent_words_from_tweets, \
-    get_num_pos_neg_neu_from_df, get_topics_count, get_frequencies_from_text
-from utils_db import query_db_last_minutes, query_db
+    get_topics_count, get_frequencies_from_text, get_num_pos_neg_neu_from_df
+from utils_db import query_db_last_days, query_db, query_num_pos_neg_neu_from_db, query_count_from_db
 
 
-def generate_table():
+def generate_table(emojis=None):
     """
     Function that create a DataTable with tweets and some info about them, such as the user that published the
     tweet, the date when it was published, and the polarity and topic for the tweet.
@@ -31,50 +31,33 @@ def generate_table():
     # Take only the day, not hour of publish
     df['created_at'] = df['created_at'].apply(lambda x: x.split(' ')[0])
     df_columns = list(df.columns)
-    table_column_names = ['Tweet', "Usuario", "Fecha", "Polaridad", "Tema"]
-    return dash_table.DataTable(
-        columns=[{"name": f"{table_column_names[i]}", "id": df_columns[i]} for i in range(len(df_columns))],
-        data=df.to_dict('records'),
-        style_table={'height': '400px', 'overflowY': 'scroll'},
-        fixed_rows={'headers': True},
-        style_cell={'minWidth': 15, 'width': 35, 'maxWidth': 800, 'text-align': 'center'},
-        style_cell_conditional=[
-            {
-                'if': {'column_id': 'text'},
-                'textAlign': 'left'
-            },
-            {
-                'if': {'column_id': 'text'},
-                'textAlign': 'left'
-            }
-        ],
-        style_header_conditional=[
-            {
-                'if': {'column_id': col},
-                'fontWeight': 'bold'
-            } for col in df_columns
-        ],
-        style_header={'text-align': 'center'},
-        style_data_conditional=[
-            {
-                'if': {'column_id': 'text'},
-                'whiteSpace': 'normal',
-                'height': 'auto'
-            }
-        ],
-        page_size=10,
-        page_action='none'
-    )
-
-
-def generate_table_from_df(df):
-    df_columns = list(df.columns)
+    if emojis is not None:
+        df['polarity'] = df['polarity'].apply(lambda x: f"{x}{emojis[x]}")
     # Add the table column names that will appear in the application. Manually change to add/delete columns.
     table_column_names = ['Tweet', "Usuario", "Fecha publicación", "Polaridad", "Topic"]
+    return generate_table_from_df(df, df_columns=df_columns, table_column_names=table_column_names)
+
+
+def generate_table_from_df(df, df_columns=None, table_column_names=None):
+    """
+    Function that generate a dash.DataTable given a pandas.DataFrame.
+    Args:
+        df(pandas.DataFrame): DataFrame with the data
+        df_columns (list(str)): List with the columns of the DataFrame to show
+        table_column_names (list(str)): List with the names of the columns to show in the table
+
+    Returns dash_table.DataTble: DataTable with the given data.
+
+    """
+    if df_columns is None:
+        df_columns = list(df.columns)
+    # Add the table column names that will appear in the application. Manually change to add/delete columns.
+    if table_column_names is None:
+        table_column_names = ['Tweet', "Usuario", "Fecha publicación", "Polaridad", "Topic"]
     return dash_table.DataTable(
         columns=[{"name": f"{table_column_names[i]}", "id": df_columns[i]} for i in range(len(df_columns))],
         data=df.to_dict('records'),
-        style_table={'height': '400px', 'overflowY': 'scroll'},
+        style_table={'height': '400px', 'overflowY': 'scroll', 'padding': '1em'},
         #  fixed_rows={'headers': True},
         style_cell={'minWidth': 15, 'width': 35, 'maxWidth': 1005, 'text-align': 'center'},
         style_cell_conditional=[
@@ -153,8 +136,8 @@ def generate_wordcloud(text):
                    # width = 500, height = 400,
                    colormap='Set2', collocations=False,
                    max_words=50000, background_color="white", mask=mask,
-                   color_func=mask_colors, # words color
-                   contour_color='#023075', contour_width=1, # Border color and size
+                   color_func=mask_colors,  # words color
+                   contour_color='#023075', contour_width=1,  # Border color and size
                    random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
     wc.to_file('img_saves/img_transparent.png')
     return html.Center(html.Img(src=wc.to_image()))
@@ -168,7 +151,7 @@ def generate_pie_chart_from_df(df, username, days=10):
         username (str): Username.
         df (pd.DataFrame): A Pandas DataFrame that contains the tweets and its labels.
         days (int, optional): Time period to see tweets from to today. Defaults to 10.
-    
+
     Returns:
         Dash html.Div: A Dash html.Div that contains the Pie Chart, so it can be easily inserted into the Dash App.
     """
@@ -176,7 +159,12 @@ def generate_pie_chart_from_df(df, username, days=10):
     return generate_pie_chart_less(num_pos=num_pos, num_neg=num_neg, num_neu=num_neu, username=username)
 
 
-def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, hashtag='...'):
+def generate_pie_chart_from_db(username):
+    num_pos, num_neg, num_neu = query_num_pos_neg_neu_from_db()
+    return generate_pie_chart_less(num_pos, num_neg, num_neu, username)
+
+
+def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, hashtag='Twitter'):
     """Function that generate a Dash Pie Chart for a given table_name and it's attributes for the last days selected
     or for the full time period.
 
@@ -188,54 +176,21 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, has
     Returns:
         Dash html.Div: A Dash html.Div that contains the Pie Chart, so it can be easily inserted into the Dash App.
     """
-    func = query_db if isinstance(days, str) else query_db_last_minutes
-    title_chart = f"Numero de tweets con el hashtag #{hashtag}" if isinstance(days,
-                                                                       str) else f"Número de tweets en los últimos {days} días."
-
-    kwargs = {'days': days} if isinstance(days, str) else {'days': int(days)}
-
-    table_attributes = ['text', 'user_name', 'created_at', 'polarity'] if table_attributes is None else table_attributes
-    df = func(table_name=table_name, table_attributes=table_attributes, **kwargs)
-    print(df.head())
-    if len(df) == 0:
-        # If there aren't any items saved, we don't show anything.
-        return ""
-
-    num_pos, num_neg, num_neu = get_num_pos_neg_neu_from_df(df)
+    if isinstance(days, str):
+        title_chart = f"Numero de tweets con el hashtag #{hashtag}"
+        num_pos, num_neg, num_neu = query_num_pos_neg_neu_from_db()
+    else:
+        days_str = 'minutos'
+        title_chart = f"Número de tweets en los últimos {days} {days_str}."
+        days = int(days)
+        days_str = 'minutes'
+        num_pos = query_count_from_db(constraints=f"WHERE polarity='Positivo' AND created_at BETWEEN datetime("
+                                                  f"'now', '-{days} {days_str}') and datetime('now')")
+        num_neg = query_count_from_db(constraints=f"WHERE polarity='Negativo' AND created_at BETWEEN datetime("
+                                                  f"'now', '-{days} {days_str}') and datetime('now')")
+        num_neu = query_count_from_db(constraints=f"WHERE polarity='Neutro' AND created_at BETWEEN datetime("
+                                                  f"'now', '-{days} {days_str}') and datetime('now')")
     return generate_pie_chart_less(num_pos, num_neg, num_neu, username=hashtag, title=title_chart)
-
-    """
-    return html.Div([
-        dcc.Graph(
-            id='pie-chart',
-            figure={
-                'data': [
-                    go.Pie(
-                        labels=['Positivos', 'Negativos', 'Neutros'],
-                        values=[num_pos, num_neg, num_neu],
-                        name='Polaridad',
-                        marker_colors=['rgba(184, 247, 212, 0.6)', 'rgba(255, 50, 50, 0.6)', 'rgba(131, 90, 241, 0.6)'],
-                        textinfo='value',
-                        hole=.65
-                    )
-                ],
-                'layout': {
-                    'showLeyend': False,
-                    'title': title_chart,
-                    'annotations': [
-                        dict(
-                            text='{0:.1f}K'.format((num_pos + num_neg + num_neu) / 1000),
-                            font=dict(
-                                size=40
-                            ),
-                            showarrow=False
-                        )
-                    ]
-                }
-            }
-        )
-    ], style={'height': 450, 'width': '27%', 'display': 'inline-block'})
-    """
 
 
 def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None, title=None):

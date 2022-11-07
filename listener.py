@@ -16,6 +16,34 @@ class StreamListener(tweepy.Stream):
     """Class to get tweets
     """
 
+    sentiment_eng_spa = {
+        'positive': 'Positivo',
+        'negative': 'Negativo',
+        'neutral': 'Neutro'
+    }
+
+    topic_eng_spa = {
+        'business_&_entrepreneurs': 'Negocios',
+        'celebrity_&_pop_culture': 'Famosos',
+        'diaries_&_daily_life': 'Vida diaria',
+        'family': 'Familia',
+        'fashion_&_style': 'Moda',
+        'film_tv_&_video': 'Películas',
+        'fitness_&_health': 'Salud',
+        'food_&_dining': 'Comida',
+        'gaming': 'Gaming',
+        'learning_&_educational': 'Educación',
+        'music': 'Música',
+        'news_&_social_concern': 'Noticias',
+        'other_hobbies': 'Hobbies',
+        'relationships': 'Relaciones',
+        'science_&_technology': 'Ciencia',
+        'sports': 'Deportes',
+        'travel_&_adventure': 'Viajes',
+        'youth_&_student_life': 'Juventud',
+        'arts_&_culture': 'Arte'
+    }
+
     def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, classifier, topic_classifier,
                  **kwargs):
         super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, **kwargs)
@@ -44,10 +72,11 @@ class StreamListener(tweepy.Stream):
         id_str = status['id_str']
         created_at = format_time(status['created_at'])
         #  sentiment = self.__sentiment_task.get_sentiment(text)
-        sentiment = self.__sentiment_task.sentiment(text)['label']
+        sentiment = self.__polarity_eng_spa(self.__sentiment_task.sentiment(text)['label'])
         #  polarity = self.__polarity_str_to_int(sentiment)
         polarity = sentiment
-        topic = ', '.join(list(self.__topic_task.topic(text)['label']))
+        # topic = ', '.join(list(self.__topic_task.topic(text)['label']))
+        topic = ', '.join([self.__topic_eng_spa(top) for top in self.__topic_task.topic(text)['label']])
         if not topic:
             topic = "Desconocido"
         #  topic = ', '.join(list(self.__topic_task.get_topic(text)))
@@ -97,10 +126,8 @@ class StreamListener(tweepy.Stream):
                 print(f"Exception encountered: {e}")
             conn.close()
 
-    def __polarity_str_to_int(self, polarity):
-        if polarity == 'Positive':
-            return 1
-        elif polarity == 'Negative':
-            return -1
-        else:
-            return 0
+    def __polarity_eng_spa(self, polarity):
+        return self.sentiment_eng_spa[polarity]
+
+    def __topic_eng_spa(self, topic):
+        return self.topic_eng_spa[topic]
