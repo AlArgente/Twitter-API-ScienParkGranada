@@ -136,6 +136,10 @@ dmypy.json
 # Credential files
 credentials.py
 credentials_elevated.py
+credentials_dasci.py
+
+# DB Files
+test.db
 
 # Other files
 .idea

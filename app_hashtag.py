@@ -5,7 +5,9 @@ from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from dash_extensions.enrich import DashProxy, MultiplexerTransform
 
-from utils_app import generate_table, generate_timeline_user, generate_pie_chart
+from utils_app import generate_table, generate_timeline_user, generate_pie_chart, background_dasci_img
+
+# Slogan con SentIA: Twittea con 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 bootstrap_theme = [dbc.themes.BOOTSTRAP]
@@ -18,11 +20,11 @@ app = DashProxy(__name__, prevent_initial_callbacks=True,
 app.config.external_stylesheets = bootstrap_theme
 app.title = 'Sent-IA'
 app.layout = html.Div(children=[
-    html.H2('Sent-IA', style={"text-align": "center", 'padding-top':'1em', 'margin-bottom':'-1em'}),
+    html.H2('Sent-IA está escuchando el hashtag #ExpoIA', style={"text-align": "center", 'padding-top':'1em', 'margin-bottom':'-1em', 'color':'#006825'}),
     dcc.Interval(id='interval-component-slow',
-                 # interval=1.8e+6,# 30 minutes
-                 interval=10000,  # For testing
-                 n_intervals=0),
+                # interval=1.8e+6,# 30 minutes
+                interval=10000,  # For testing
+                n_intervals=0),
     html.Br(),
     html.Div(id='live-update-graph'),
     html.Div(id='live-update-bottom-graph'),
@@ -34,21 +36,30 @@ happy_emoji = emoji_csv['Native'].loc[emoji_csv['Description'] == 'GRINNING FACE
 neutral_emoji = emoji_csv['Native'].loc[emoji_csv['Description'] == 'NEUTRAL FACE'].values[0]
 negative_emoji = emoji_csv['Native'].loc[emoji_csv['Description'] == 'PENSIVE FACE'].values[0]
 emojis = {'Positivo': happy_emoji,
-          'Negativo': negative_emoji,
-          'Neutro': neutral_emoji
-          }
+        'Negativo': negative_emoji,
+        'Neutro': neutral_emoji
+        }
 del emoji_csv
 
 @app.callback(Output('live-update-graph', 'children'),
-              [Input('interval-component-slow', 'n_intervals')])
+            [Input('interval-component-slow', 'n_intervals')])
 def update_graph_live(n):
     children = [
         generate_table(emojis=emojis),
         html.Div([
+        html.Div([
             generate_timeline_user("DaSCI_es"),
             generate_timeline_user("ParqueCiencias"),
-            generate_pie_chart(days="all"),
-            generate_pie_chart(days=5)
+        ], style={'width':'43%', 'display':'inline-block'}),
+        html.Div([
+                generate_pie_chart(days="all"),
+                generate_pie_chart(days=5),
+        ], style={'width':'55%', 'display':'inline'}),
+        html.Br(),
+        html.Div([
+        background_dasci_img(),
+        ], style={'margin-left':'auto', 'margin_right':'3em', 'float':'right', 'margin-top':'-3em', 'position':'relative'}
+        )
         ], style={
             'padding-top': '2em',
         }

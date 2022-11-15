@@ -76,7 +76,7 @@ def generate_table_from_df(df, df_columns=None, table_column_names=None):
                 'fontWeight': 'bold'
             } for col in df_columns
         ],
-        style_header={'text-align': 'center'},
+        style_header={'text-align': 'center', 'background_color':'#006825', 'color':'white'},
         style_data_conditional=[
             {
                 'if': {'column_id': 'text'},
@@ -105,8 +105,8 @@ def generate_timeline_user(username="DaSCI_es"):
                     </a>
                     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
                 ''',
-        height=450,
-        width=350
+        height=425, # 450
+        width=325 # 350
     )
 
 
@@ -133,12 +133,12 @@ def generate_wordcloud(text):
     #  text = get_text_joint(df['text'])
     mask[mask == 0] = 255
     wc = WordCloud(width=mask.shape[1] * 5, height=mask.shape[0] * 5,
-                   # width = 500, height = 400,
-                   colormap='Set2', collocations=False,
-                   max_words=50000, background_color="white", mask=mask,
-                   color_func=mask_colors,  # words color
-                   contour_color='#023075', contour_width=1,  # Border color and size
-                   random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
+                # width = 500, height = 400,
+                colormap='Set2', collocations=False,
+                max_words=50000, background_color="white", mask=mask,
+                color_func=mask_colors,  # words color
+                contour_color='#023075', contour_width=1,  # Border color and size
+                random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
     wc.to_file('img_saves/img_transparent.png')
     return html.Center(html.Img(src=wc.to_image()))
 
@@ -185,11 +185,11 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, has
         days = int(days)
         days_str = 'minutes'
         num_pos = query_count_from_db(constraints=f"WHERE polarity='Positivo' AND created_at BETWEEN datetime("
-                                                  f"'now', '-{days} {days_str}') and datetime('now')")
+                                                f"'now', '-{days} {days_str}') and datetime('now')")
         num_neg = query_count_from_db(constraints=f"WHERE polarity='Negativo' AND created_at BETWEEN datetime("
-                                                  f"'now', '-{days} {days_str}') and datetime('now')")
+                                                f"'now', '-{days} {days_str}') and datetime('now')")
         num_neu = query_count_from_db(constraints=f"WHERE polarity='Neutro' AND created_at BETWEEN datetime("
-                                                  f"'now', '-{days} {days_str}') and datetime('now')")
+                                                f"'now', '-{days} {days_str}') and datetime('now')")
     return generate_pie_chart_less(num_pos, num_neg, num_neu, username=hashtag, title=title_chart)
 
 
@@ -228,7 +228,7 @@ def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None, title=None
                 }
             }
         )
-    ], style={'width': '27%', 'display': 'inline-block'})
+    ], style={'width': '25%', 'display': 'inline-block', 'position': 'relative'}) # 'width': '27%' in the old version
 
 
 def generate_topics_pie_chart_from_df(df, width=69):
@@ -379,3 +379,12 @@ def generate_barplot_most_used_words(df, clf, width=49):
             }
         )
     ], style={'width': f"{width}%", 'display': 'inline-block', 'padding': '0 0 0 20'})
+
+
+def background_dasci_img():
+    src_img = 'img/DaSCI_logo_horizontal-1.png'
+    img = Image.open(src_img)
+    img_resampled = img.resize((222, 54), Image.ADAPTIVE) # x(-20)
+    img_resampled = img.resize((261, 64), Image.ADAPTIVE) # x(-17)
+    # img_resampled = img.resize((296, 72), Image.ADAPTIVE) # x(-15)
+    return html.Img(src=img_resampled)

@@ -15,7 +15,8 @@ import tweetnlp
 
 from utils_app import generate_table_for_hashtag, \
     generate_barplot_most_used_words, generate_timeline_user, generate_pie_chart_less, \
-    generate_topics_pie_chart_from_df, generate_wordcloud, generate_pie_chart_from_df
+    generate_topics_pie_chart_from_df, generate_wordcloud, generate_pie_chart_from_df, \
+    background_dasci_img
 from utils import get_tweets_by_hashtag, get_tweets_for_username, get_num_pos_neg_neu_from_df
 
 
@@ -121,6 +122,7 @@ def update_graph_live_hashtag(n, input_hashtag):
             generate_topics_pie_chart_from_df(hashtag_df),
             html.Br(),
             generate_wordcloud(hashtag_df['text'].to_list()),
+            background_dasci_img(),
         ])
     ]
     return children
