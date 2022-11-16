@@ -22,8 +22,8 @@ app.title = 'Sent-IA'
 app.layout = html.Div(children=[
     html.H2('Sent-IA está escuchando el hashtag #ExpoIA', style={"text-align": "center", 'padding-top':'1em', 'margin-bottom':'-1em', 'color':'#006825'}),
     dcc.Interval(id='interval-component-slow',
-                # interval=1.8e+6,# 30 minutes
-                interval=10000,  # For testing
+                interval=1.8e+6,# 30 minutes
+                # interval=10000,  # For testing
                 n_intervals=0),
     html.Br(),
     html.Div(id='live-update-graph'),
@@ -58,7 +58,7 @@ def update_graph_live(n):
         html.Br(),
         html.Div([
         background_dasci_img(),
-        ], style={'margin-left':'auto', 'margin_right':'3em', 'float':'right', 'margin-top':'-3em', 'position':'relative'}
+        ], style={'margin-left':'auto', 'margin_right':'5em', 'float':'right', 'margin-top':'-3em', 'position':'relative'}
         )
         ], style={
             'padding-top': '2em',

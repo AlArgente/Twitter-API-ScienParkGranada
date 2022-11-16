@@ -8,7 +8,7 @@ from enum import Enum
 
 DB_NAME = "./test.db"
 TABLE_NAME = 'Twitter'
-TRACK_WORDS = ['#BuenosDías', '#Twitter']
+TRACK_WORDS = ['#SentIA', '#ExpoIA']
 
 
 class TablesEnum(Enum):

@@ -382,9 +382,10 @@ def generate_barplot_most_used_words(df, clf, width=49):
 
 
 def background_dasci_img():
-    src_img = 'img/DaSCI_logo_horizontal-1.png'
+    src_img = 'img/logofullweb.png'
     img = Image.open(src_img)
-    img_resampled = img.resize((222, 54), Image.ADAPTIVE) # x(-20)
-    img_resampled = img.resize((261, 64), Image.ADAPTIVE) # x(-17)
-    # img_resampled = img.resize((296, 72), Image.ADAPTIVE) # x(-15)
-    return html.Img(src=img_resampled)
+    # img = img.resize((347, 43), Image.ADAPTIVE) # x(-20)
+    # img = img.resize((261, 64), Image.ADAPTIVE) # x(-17)
+    # img = img.resize((463, 57), Image.ADAPTIVE) # x(-15)
+    img = img.resize((695, 86), Image.ADAPTIVE) # x(-10)
+    return html.Img(src=img)
