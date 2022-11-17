@@ -20,7 +20,8 @@ app = DashProxy(__name__, prevent_initial_callbacks=True,
 app.config.external_stylesheets = bootstrap_theme
 app.title = 'Sent-IA'
 app.layout = html.Div(children=[
-    html.H2('Sent-IA está escuchando el hashtag #ExpoIA', style={"text-align": "center", 'padding-top':'1em', 'margin-bottom':'-1em', 'color':'#006825'}),
+    html.H2('Sent-IA está escuchando el hashtag #ExpoIA', style={"text-align": "center", 'padding-top':'1em', 'margin-bottom':'-1em', 'color':'#006825',
+                                                                 'padding-bottom':'1em'}),
     dcc.Interval(id='interval-component-slow',
                 interval=1.8e+6,# 30 minutes
                 # interval=10000,  # For testing
