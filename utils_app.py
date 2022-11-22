@@ -76,7 +76,7 @@ def generate_table_from_df(df, df_columns=None, table_column_names=None):
                 'fontWeight': 'bold'
             } for col in df_columns
         ],
-        style_header={'text-align': 'center', 'background_color':'#006825', 'color':'white'},
+        style_header={'text-align': 'center', 'background_color': '#006825', 'color': 'white'},
         style_data_conditional=[
             {
                 'if': {'column_id': 'text'},
@@ -105,8 +105,8 @@ def generate_timeline_user(username="DaSCI_es"):
                     </a>
                     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
                 ''',
-        height=425, # 450
-        width=325 # 350
+        height=425,  #  450
+        width=325  #  350
     )
 
 
@@ -133,19 +133,19 @@ def generate_wordcloud(text):
     #  text = get_text_joint(df['text'])
     mask[mask == 0] = 255
     wc = WordCloud(width=mask.shape[1] * 5, height=mask.shape[0] * 5,
-                # width = 500, height = 400,
-                colormap='Set2', collocations=False,
-                max_words=50000, background_color="white", mask=mask,
-                color_func=mask_colors,  # words color
-                contour_color='#023075', contour_width=1,  # Border color and size
-                random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
+                   # width = 500, height = 400,
+                   colormap='Set2', collocations=False,
+                   max_words=50000, background_color="white", mask=mask,
+                   color_func=mask_colors,  # words color
+                   contour_color='#023075', contour_width=1,  # Border color and size
+                   random_state=1, stopwords=STOPWORDS).generate_from_frequencies(text)
     wc.to_file('img_saves/img_transparent.png')
     return html.Center(html.Img(src=wc.to_image()))
 
 
 def generate_pie_chart_from_df(df, username, days=10):
-    """Function that generate a Pie Chart for Dash from a DataFrame given. The pie chart will show the % of tweets that are
-    positive, negative and neutral.
+    """Function that generate a Pie Chart for Dash from a DataFrame given. The pie chart will show the % of tweets
+    that are positive, negative and neutral.
 
     Args:
         username (str): Username.
@@ -164,14 +164,13 @@ def generate_pie_chart_from_db(username):
     return generate_pie_chart_less(num_pos, num_neg, num_neu, username)
 
 
-def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, hashtag='Twitter'):
+def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, hashtag='ExpoIA'):
     """Function that generate a Dash Pie Chart for a given table_name and it's attributes for the last days selected
     or for the full time period.
 
-    Args:
-        table_name (str, optional): Name of the SQL table. Defaults to 'Twitter'.
-        table_attributes (list, optional): List of table attributes to retrieve. Defaults to None.
-        days (int, optional): Last days to select. Also can be str. If str then full time period will be applied. Defaults to 10.
+    Args: table_name (str, optional): Name of the SQL table. Defaults to 'Twitter'. table_attributes (list,
+    optional): List of table attributes to retrieve. Defaults to None. days (int, optional): Last days to select.
+    Also can be str. If str then full time period will be applied. Defaults to 10.
 
     Returns:
         Dash html.Div: A Dash html.Div that contains the Pie Chart, so it can be easily inserted into the Dash App.
@@ -180,16 +179,16 @@ def generate_pie_chart(table_name='Twitter', table_attributes=None, days=10, has
         title_chart = f"Numero de tweets con el hashtag #{hashtag}"
         num_pos, num_neg, num_neu = query_num_pos_neg_neu_from_db()
     else:
-        days_str = 'minutos'
+        days_str = 'días'
         title_chart = f"Número de tweets en los últimos {days} {days_str}."
         days = int(days)
-        days_str = 'minutes'
+        days_str = 'days'
         num_pos = query_count_from_db(constraints=f"WHERE polarity='Positivo' AND created_at BETWEEN datetime("
-                                                f"'now', '-{days} {days_str}') and datetime('now')")
+                                                  f"'now', '-{days} {days_str}') and datetime('now')")
         num_neg = query_count_from_db(constraints=f"WHERE polarity='Negativo' AND created_at BETWEEN datetime("
-                                                f"'now', '-{days} {days_str}') and datetime('now')")
+                                                  f"'now', '-{days} {days_str}') and datetime('now')")
         num_neu = query_count_from_db(constraints=f"WHERE polarity='Neutro' AND created_at BETWEEN datetime("
-                                                f"'now', '-{days} {days_str}') and datetime('now')")
+                                                  f"'now', '-{days} {days_str}') and datetime('now')")
     return generate_pie_chart_less(num_pos, num_neg, num_neu, username=hashtag, title=title_chart)
 
 
@@ -228,7 +227,7 @@ def generate_pie_chart_less(num_pos, num_neg, num_neu, username=None, title=None
                 }
             }
         )
-    ], style={'width': '25%', 'display': 'inline-block', 'position': 'relative'}) # 'width': '27%' in the old version
+    ], style={'width': '25%', 'display': 'inline-block', 'position': 'relative'})  #  'width': '27%' in the old version
 
 
 def generate_topics_pie_chart_from_df(df, width=69):
@@ -384,8 +383,8 @@ def generate_barplot_most_used_words(df, clf, width=49):
 def background_dasci_img():
     src_img = 'img/logofullweb.png'
     img = Image.open(src_img)
-    # img = img.resize((347, 43), Image.ADAPTIVE) # x(-20)
+    #  img = img.resize((347, 43), Image.ADAPTIVE) # x(-20)
     # img = img.resize((261, 64), Image.ADAPTIVE) # x(-17)
-    # img = img.resize((463, 57), Image.ADAPTIVE) # x(-15)
-    img = img.resize((695, 86), Image.ADAPTIVE) # x(-10)
+    #  img = img.resize((463, 57), Image.ADAPTIVE) # x(-15)
+    img = img.resize((695, 86), Image.ADAPTIVE)  #  x(-10)
     return html.Img(src=img)

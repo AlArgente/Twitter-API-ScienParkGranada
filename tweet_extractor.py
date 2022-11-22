@@ -7,7 +7,7 @@ This file must be running on background to download tweets about the TRACK_WORDS
 import os
 import tweepy
 import credentials_elevated as credentials
-# import credentials_dasci as credentials
+#  import credentials_dasci as credentials
 
 from listener import StreamListener
 import tweetnlp
@@ -32,14 +32,14 @@ def main():
         conn.close()
         # Load credentials
         auth = tweepy.OAuthHandler(credentials.API_KEY,
-                                credentials.API_SECRET_KEY)
+                                   credentials.API_SECRET_KEY)
         auth.set_access_token(credentials.ACCESS_TOKEN,
-                            credentials.ACCESS_TOKEN_SECRET)
+                              credentials.ACCESS_TOKEN_SECRET)
         # api = tweepy.API(auth)
         # Create a listener to download the tweets.
         my_listener = StreamListener(consumer_key=auth.consumer_key, consumer_secret=auth.consumer_secret,
-                                    access_token=auth.access_token, access_token_secret=auth.access_token_secret,
-                                    classifier=classifier, topic_classifier=topic_classifier)
+                                     access_token=auth.access_token, access_token_secret=auth.access_token_secret,
+                                     classifier=classifier, topic_classifier=topic_classifier)
         print('Listening')
         my_listener.filter(languages=['es', 'en'], track=TRACK_WORDS)
 

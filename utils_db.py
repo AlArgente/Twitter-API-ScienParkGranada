@@ -124,7 +124,8 @@ def query_db(table_name='Twitter', table_attributes=None, **kwargs):
 
 
 def query_db_last_days(table_name="Twitter", table_attributes=None, **kwargs):
-    """Function that retrieves the elements from a table in the last minutes. The number of minutes must be given in kwargs
+    """Function that retrieves the elements from a table in the last minutes. The number of minutes must be given in
+    kwargs
 
     Args:
         table_name (str, optional): Table where search the tweets. Defaults to "Twitter".
@@ -144,9 +145,10 @@ def query_db_last_days(table_name="Twitter", table_attributes=None, **kwargs):
     if not dbcon:
         raise ConnectionError("Error connecting to the database.")
     attribute_query = ', '.join(list(table_attributes))
-    #  query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER BY {table_attributes[-1]} DESC" # Works for SQL
-    # query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now') and strftime({minutes})"  #  For SQLite3
-    # For asuming we do not exceed the RAM limit, we set a 10ks limit for the tweets
+    #  query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at > NOW() - INTERVAL {minutes} DAY ORDER
+    # BY {table_attributes[-1]} DESC" # Works for SQL query = f"SELECT {attribute_query} FROM {table_name} WHERE
+    # created_at BETWEEN datetime('now') and strftime({minutes})"  #  For SQLite3 For asuming we do not exceed the
+    # RAM limit, we set a 10ks limit for the tweets
     query = f"SELECT {attribute_query} FROM {table_name} WHERE created_at BETWEEN datetime('now', '-{days} days') and datetime('now') LIMIT 10000"
     return pd.read_sql(query, con=dbcon)
 

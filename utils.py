@@ -131,8 +131,8 @@ def get_tweets_by_hashtag(api, clf, topic_clf=None, hashtag="#FelizMartes", max_
         max_tweets (int, optional): Max number of tweets to search in each call. Defaults to 100.
         max_limit (int, optional): Max number of tweets to search. Defaults to 1000.
 
-    Returns:
-        Pandas.DataFrame: DataFrame that contains the tweets, the user that created the tweet, the date and the polarity.
+    Returns: Pandas.DataFrame: DataFrame that contains the tweets, the user that created the tweet, the date and the
+    polarity.
     """
     # Method to get max_limit tweets from hashtag
     max_limit = min(max_tweets, max_limit)
@@ -169,12 +169,10 @@ def get_tweets_for_username(username, listener, clf, topic_clf=None, max_results
                             max_limit=100):
     """Function that gets the tweets from a user. Max 100 tweets.
 
-    Args:
-        username (str): Username to search
-        listener (ClientListener): Listener to search the tweets
-        clf (Classifier): Model to make the predictions
-        max_results (int, optional): Max number of tweets to retrieve. The upper limit is 100. Defaults to 100.
-        exclude (str, optional): Option for the listener to add constrains to exclude tweets in the search. Defaults to 'retweets'.
+    Args: username (str): Username to search listener (ClientListener): Listener to search the tweets clf (
+    Classifier): Model to make the predictions max_results (int, optional): Max number of tweets to retrieve. The
+    upper limit is 100. Defaults to 100. exclude (str, optional): Option for the listener to add constrains to
+    exclude tweets in the search. Defaults to 'retweets'.
 
     Returns:
         pd.DataFrame: A Pandas.DataFrame containing the tweets, polarity and when was the tweet created.

@@ -122,7 +122,7 @@ class StreamListener(tweepy.Stream):
         if check_connection_db(conn):
             try:
                 insert_data_on_table(conn=conn, data=data, table_name=table_name)
-                # print('Data inserted')
+                #  print('Data inserted')
             except Exception as e:
                 print(f"Exception encountered: {e}")
             conn.close()
