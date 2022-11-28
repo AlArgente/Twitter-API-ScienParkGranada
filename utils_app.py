@@ -34,7 +34,7 @@ def generate_table(emojis=None):
     if emojis is not None:
         df['polarity'] = df['polarity'].apply(lambda x: f"{x}{emojis[x]}")
     # Add the table column names that will appear in the application. Manually change to add/delete columns.
-    table_column_names = ['Tweet', "Usuario", "Fecha publicación", "Polaridad", "Topic"]
+    table_column_names = ['Tuit', "Usuario", "Fecha publicación", "Polaridad", "Tema"]
     return generate_table_from_df(df, df_columns=df_columns, table_column_names=table_column_names)
 
 
